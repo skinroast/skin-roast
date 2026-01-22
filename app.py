@@ -1,409 +1,136 @@
-import streamlit as st
-import openai
-from fpdf import FPDF
-import tempfile
-import json
-import os
-import base64
-import re
+-import streamlit as st
+import time
 
-# --- 1. CONFIGURATION ---
-st.set_page_config(page_title="Skin Roast: Upgrade Plan", page_icon="🔥", layout="centered")
+# --- НАСТРОЙКИ СТРАНИЦЫ ---
+st.set_page_config(page_title="Skin Roast AI", layout="centered")
 
-# --- 2. SETUP & SECRETS ---
-try:
-    if "OPENAI_API_KEY" in st.secrets:
-        openai.api_key = st.secrets["OPENAI_API_KEY"]
-except:
-    st.error("⚠️ OpenAI Key not found in Secrets.")
-
-# LINKS
-LEMON_SQUEEZY_LINK = "https://skin-roast.lemonsqueezy.com/buy" 
-UPSELL_LINK = "https://skin-roast.lemonsqueezy.com/buy"
-
-# CSS STYLE
+# --- CSS СТИЛИ ---
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stButton>button {
-        width: 100%;
-        border-radius: 8px;
-        font-weight: bold;
-        height: 3.5em;
-        background-color: #D32F2F; 
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .success-box {
+    /* Стиль для желтой плашки */
+    .funny-warning {
+        background-color: #2b2d18;
+        color: #e6c957;
         padding: 20px;
-        background-color: #1E1E1E;
-        border: 1px solid #00FF00;
-        color: #00FF00;
-        text-align: center;
+        border-radius: 10px;
+        border: 1px solid #e6c957;
         font-family: monospace;
-        margin-bottom: 20px;
+        font-size: 0.9rem;
+        margin-bottom: 25px;
+    }
+    
+    /* Заголовки */
+    .main-header {
+        font-size: 3rem;
+        font-weight: 800;
+        text-align: center;
+        margin-top: 10px;
+        background: -webkit-linear-gradient(45deg, #FF4B2B, #FF416C);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.2;
+    }
+    
+    .sub-header {
+        font-size: 1.3rem;
+        text-align: center;
+        color: #aaa;
+        margin-bottom: 30px;
+        font-weight: 300;
+    }
+    
+    /* Стиль буллитов */
+    .feature-box {
+        background-color: #262730;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 5px solid #FF4B2B;
+        margin-top: 20px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HARDCODED MEDICAL LOGIC ---
-TREATMENT_LOGIC = {
-    "Acne / Pimples": {
-        "ingredients": "Salicylic Acid (BHA), Zinc, Niacinamide",
-        "procedures": "Professional Deep Cleaning, Chemical Peels (Jessner), IPL Therapy",
-        "why_ing": "Dissolves oil and kills bacteria.",
-        "why_proc": "Clears clogged pores mechanically."
-    },
-    "Wrinkles / Aging": {
-        "ingredients": "Retinol (Vitamin A), Peptides, Vitamin C",
-        "procedures": "Botox Injections, Biorevitalization, RF-Lifting",
-        "why_ing": "Boosts collagen production overnight.",
-        "why_proc": "Relaxes muscles and hydrates deeply."
-    },
-    "Eye Bags / Tired": {
-        "ingredients": "Caffeine, Green Tea Extract, Hyaluronic Acid",
-        "procedures": "Lymphatic Drainage Massage, Microcurrent Therapy",
-        "why_ing": "Constricts blood vessels to reduce puffiness.",
-        "why_proc": "Physically pushes fluid away from the eyes."
-    },
-    "Redness": {
-        "ingredients": "Centella Asiatica (Cica), Azelaic Acid, Ceramides",
-        "procedures": "BBL / IPL Phototherapy (Laser)",
-        "why_ing": "Calms inflammation and repairs barrier.",
-        "why_proc": "Coagulates visible capillaries."
-    }
-}
+# --- ЛОГИКА: ПОКАЗАТЬ ЛЕНДИНГ ИЛИ ПРИЛОЖЕНИЕ? ---
+# Проверяем, есть ли "секретный ключ" в ссылке
+query_params = st.query_params
+access_granted = query_params.get("paid") == "true"
 
-# --- 4. AI BRAIN (OBSERVATIONAL COMEDY) ---
-SYSTEM_PROMPT = """
-YOU ARE A STAND-UP COMEDIAN & DERMATOLOGIST.
-Tone: Sharp, Observational, "No Filter". 
-Think: Bill Burr or Ricky Gervais analyzing a face.
+if not access_granted:
+    # ==========================================
+    # 🔴 ЧАСТЬ 1: ЛЕНДИНГ (ВИДЯТ ВСЕ)
+    # ==========================================
 
-🚫 BANNED:
-- NO "Sage", "Wisdom", "Ancient", "Time travel", "Heroes". 
-- NO POETRY.
-- NO DIRECT INSULTS ("Ugly", "Fat").
+    # 1. ТВОЯ ФИРМЕННАЯ ПЛАШКА
+    st.markdown("""
+    <div class="funny-warning">
+        ⚠️ <b>HONEST WARNING:</b> There is no fancy design here because I'm saving money. 
+        I have a goal: <b>Lake Oswego House ($6M) + Cherry Jaguar E-Type V12 ($150k)</b>. 
+        Every $10 you spend gets me 0.000001% closer to the dream.<br><br>
+        <b>REAL TALK:</b> I don't promise this report will buy you that house. That's on you. 
+        I promise this: <b>when you make it big, you will look the part.</b> 
+        Fix your face now, so you don't feel ashamed to drop the roof of your convertible later.
+    </div>
+    """, unsafe_allow_html=True)
 
-✅ REQUIRED VIBE (SPECIFIC & MODERN):
-- Use very specific modern scenarios to roast the "Vibe".
-- Example: "You look like you just tried to explain NFT's to your dad for 6 hours."
-- Example: "You look like a tech CEO 10 minutes before the SEC raid."
-- Example: "You have the skin of a man who washes his face with 3-in-1 shampoo and pure aggression."
-- Example: "You look like you've been surviving on Red Bull and anxiety since 2019."
-
-LOGIC RULE:
-- You MUST use the medical advice provided below.
-
-RESPONSE FORMAT (JSON ONLY):
-{
-  "roast_intro": "WRITE THE ROAST HERE. (3-4 sentences). Sharp and funny.",
-  "deep_dive_analysis": "Detailed visual analysis (5-6 sentences). Clinical but witty.",
-  "other_issues_teaser": "List 2-3 other detected issues.",
-  "ingredients": [
-      {"name": "Ingredient from Logic", "why": "Explanation"}
-  ],
-  "clinical_treatments": [
-      {"name": "Procedure from Logic", "why": "Explanation"}
-  ],
-  "routine_morning": [
-      "Step 1: Do this...",
-      "Step 2: Do that..."
-  ],
-  "routine_evening": [
-      "Step 1: Do this...",
-      "Step 2: Do that..."
-  ]
-}
-"""
-
-def encode_image(image_file):
-    return base64.b64encode(image_file.read()).decode('utf-8')
-
-def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
-    if not openai.api_key:
-        return None
-    
-    base64_image = encode_image(image_file)
-    habits_str = ", ".join(habits) if habits else "None"
-    
-    logic = TREATMENT_LOGIC.get(problem, TREATMENT_LOGIC["Acne / Pimples"]) 
-    
-    user_text = f"""
-    User Data: Age {age}, Skin Type {skin_type}. 
-    FOCUS PROBLEM: {problem}. 
-    Habits: {habits_str}.
-    
-    MANDATORY MEDICAL LOGIC:
-    - Ingredients: {logic['ingredients']} (Why: {logic['why_ing']})
-    - Procedures: {logic['procedures']} (Why: {logic['why_proc']})
-    """
-
+    # 2. КАРТИНКА (Лицо со сканом - Исправил на PNG!)
     try:
-        response = openai.chat.completions.create(
-            model="gpt-4o",
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": [
-                    {"type": "text", "text": user_text},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-                ]}
-            ],
-            max_tokens=2000
-        )
-        content = response.choices[0].message.content
-        if not content: return None
-        return json.loads(content)
-    except Exception as e:
-        st.error(f"AI Error: {e}")
-        return None
+        st.image("scan_face.png", caption="AI Deep Scan Analysis", use_column_width=True)
+    except:
+        st.info("🖼 [Картинка scan_face.png не найдена. Загрузи файл в GitHub!]")
 
-def clean_text(text):
-    """
-    Cleans text for PDF generation by replacing incompatible unicode characters
-    with ASCII equivalents.
-    """
-    if isinstance(text, str):
-        # Dictionary of common "Smart" characters to "Simple" characters
-        replacements = {
-            '\u2018': "'",   # Left Single Quote
-            '\u2019': "'",   # Right Single Quote (The specific crasher)
-            '\u201a': ",",   # Single low quotation mark
-            '\u201b': "'",   # Single high-reversed-9 quotation mark
-            '\u201c': '"',   # Left Double Quote
-            '\u201d': '"',   # Right Double Quote
-            '\u201e': '"',   # Double low quotation mark
-            '\u2026': '...', # Ellipsis
-            '\u2013': '-',   # En dash
-            '\u2014': '-',   # Em dash
-            '\u02bc': "'",   # Modifier letter apostrophe
-            '\u00a0': ' ',   # Non-breaking space
-            '’': "'",        # Another variation of apostrophe
-            '‘': "'",
-            '“': '"',
-            '”': '"',
-            '–': '-'
-        }
-        
-        # Apply all replacements
-        for char, replacement in replacements.items():
-            text = text.replace(char, replacement)
-            
-        # Final safety net: Force Encode to Latin-1, replacing unknown with '?'
-        # (But since we mapped the common ones, '?' should rarely appear)
-        return text.encode('latin-1', 'replace').decode('latin-1')
-        
-    return str(text)
+    # 3. ПРОДАЮЩИЙ ТЕКСТ
+    st.markdown('<div class="main-header">YOUR MIRROR LIES.<br>AI DOESN\'T.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Get a brutally honest analysis of your skin health, real age, and potential issues before they become visible.</div>', unsafe_allow_html=True)
 
-def create_pdf(data, problem_name):
-    """Generate PDF"""
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    
-    # --- PAGE 1 ---
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 24)
-    pdf.cell(0, 20, "YOUR UPGRADE PLAN", ln=True, align='C')
-    pdf.ln(5)
-    
-    # ROAST
-    pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "THE VIBE CHECK:", ln=True)
-    pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['roast_intro']))
-    pdf.ln(5)
+    # 4. ЧТО ВНУТРИ
+    st.markdown("""
+    <div class="feature-box">
+        <h4>What you get for $10:</h4>
+        <p>✅ <b>The Roast:</b> No sugar-coating. See exactly what others notice but don't say.</p>
+        <p>✅ <b>The Scan:</b> Detects deep wrinkles, acne score, and texture issues.</p>
+        <p>✅ <b>The Fix:</b> A personalized Morning & Night routine just for YOUR face.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # DEEP SCAN
-    pdf.set_font("Helvetica", 'B', 14)
-    clean_problem = clean_text(problem_name).upper()
-    pdf.cell(0, 10, f"DEEP SCAN: {clean_problem}", ln=True)
-    pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['deep_dive_analysis']))
-    pdf.ln(10)
-    
-    # TEASER
-    pdf.set_font("Helvetica", 'B', 14)
-    pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 10, "ALSO DETECTED (NOT INCLUDED):", ln=True)
-    pdf.set_font("Helvetica", 'I', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['other_issues_teaser']))
-    pdf.set_text_color(0, 0, 0)
-    
-    # --- PAGE 2 ---
-    pdf.add_page()
-    
-    # CLINICAL
-    pdf.set_font("Helvetica", 'B', 18)
-    pdf.cell(0, 15, "CLINICAL PROTOCOL (PRO LEVEL)", ln=True, align='C')
-    pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt="Professional treatments for faster results. Consult a certified doctor first.", align='C')
-    pdf.ln(5)
+    st.write("") 
 
-    for item in data['clinical_treatments']:
-        pdf.set_font("Helvetica", 'B', 13)
-        pdf.cell(0, 8, txt=f"[*] {clean_text(item['name'])}", ln=True)
-        pdf.set_font("Helvetica", '', 11)
-        pdf.multi_cell(0, 5, txt=f"Target: {clean_text(item['why'])}\n")
-        pdf.ln(2)
+    # 5. КНОПКА КУПИТЬ (Patreon)
+    # Вставь сюда ссылку на товар!
+    PATREON_LINK = "https://www.patreon.com/твоя_ссылка" 
+    
+    st.link_button("👉 UNLOCK MY ROAST ($10)", PATREON_LINK, type="primary", use_container_width=True)
+    st.caption("Secure payment via Patreon. Instant Access.")
 
-    pdf.ln(5)
-
-    # INGREDIENTS
-    pdf.set_font("Helvetica", 'B', 18)
-    pdf.cell(0, 15, "YOUR HOME WEAPONS", ln=True, align='C')
-    
-    for item in data['ingredients']:
-        pdf.set_font("Helvetica", 'B', 13)
-        pdf.cell(0, 8, txt=f"[+] {clean_text(item['name'])}", ln=True)
-        pdf.set_font("Helvetica", '', 11)
-        pdf.multi_cell(0, 5, txt=f"Why: {clean_text(item['why'])}\n")
-        pdf.ln(2)
-
-    # --- PAGE 3 ---
-    pdf.add_page()
-    
-    # SAFETY
-    pdf.set_fill_color(255, 200, 200) 
-    pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, "[!] SAFETY PROTOCOL (READ THIS):", ln=True, fill=True)
-    pdf.set_font("Helvetica", '', 11)
-    safety_text = (
-        "1. Active ingredients (Retinol, Acids) are powerful. They can burn if misused.\n"
-        "2. ALWAYS use SPF 30+ if you use Retinol or Acids. No excuses.\n"
-        "3. PATCH TEST: Apply a small amount on your neck before putting it on your face.\n"
-        "4. Start slowly: Use Retinol 2 times a week, then increase."
-    )
-    pdf.multi_cell(0, 6, txt=safety_text)
-    pdf.ln(10)
-
-    # ROUTINE (LIST FORMAT)
-    pdf.set_font("Helvetica", 'B', 18)
-    pdf.cell(0, 15, "DAILY OPERATIONS", ln=True, align='C')
-    
-    pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "MORNING:", ln=True)
-    pdf.set_font("Helvetica", '', 11)
-    
-    if isinstance(data.get('routine_morning'), list):
-        for idx, step in enumerate(data['routine_morning'], 1):
-            pdf.multi_cell(0, 6, txt=f"{idx}. {clean_text(step)}")
-            pdf.ln(2)
-    else:
-        pdf.multi_cell(0, 6, txt=clean_text(str(data.get('routine_morning'))))
-    
-    pdf.ln(5)
-    
-    pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "EVENING:", ln=True)
-    pdf.set_font("Helvetica", '', 11)
-    
-    if isinstance(data.get('routine_evening'), list):
-        for idx, step in enumerate(data['routine_evening'], 1):
-            pdf.multi_cell(0, 6, txt=f"{idx}. {clean_text(step)}")
-            pdf.ln(2)
-    else:
-        pdf.multi_cell(0, 6, txt=clean_text(str(data.get('routine_evening'))))
-
-    pdf.ln(10)
-    
-    # JOKE
-    pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, "HONEST NOTE:", ln=True, align='C')
-    pdf.set_font("Helvetica", '', 11)
-    
-    joke_text = (
-        "You can find these cosmetics by active substance yourself through GPT or Gemini completely free of charge. "
-        "But since I am saving for a house and a car, in the best traditions of capitalism, "
-        "I offer you to buy a ready-made list for $5."
-    )
-    pdf.multi_cell(0, 6, txt=joke_text, align='C')
-    pdf.ln(5)
-
-    # LINK
-    pdf.set_text_color(200, 0, 0)
-    pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_LINK)
-    
-    pdf.ln(15)
-    
-    # DISCLAIMER
-    pdf.set_text_color(100, 100, 100) 
-    pdf.set_font("Helvetica", 'I', 8)
-    disclaimer = (
-        "MEDICAL DISCLAIMER: This report is generated by AI for informational purposes only. "
-        "It does not constitute medical advice, diagnosis, or treatment. "
-        "Always seek the advice of a qualified physician. "
-        "The user assumes full responsibility for the use of any recommended products."
-    )
-    pdf.multi_cell(0, 4, txt=disclaimer, align='C')
-
-    return pdf
-
-# --- 4. UI INTERFACE ---
-st.warning("""
-⚠️ **HONEST WARNING:**
-I have a goal: **Lake Oswego House ($6M) + Cherry Jaguar E-Type V12 ($150k)**.
-Every $10 you spend gets me closer.
-In return, I give you the truth about your face. Fair trade.
-""")
-
-GOAL = 6150000 
-CURRENT = 260 
-st.progress(CURRENT / GOAL)
-st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
-st.divider()
-
-st.title("SKIN ROAST 🔥")
-st.caption("The Protocol for Men.")
-
-# PAYMENT SUCCESS STATE
-if st.query_params.get("paid") == "true":
-    # SUCCESS BOX WITHOUT SNOW
-    st.markdown('<div class="success-box">PAYMENT VERIFIED. ACCESS GRANTED.</div>', unsafe_allow_html=True)
-    
-    st.write("### Configure Analysis:")
-    
-    p_age = st.selectbox("Your Age", ["Under 25", "25-35", "35-45", "45+"], key="p_age")
-    p_skin = st.selectbox("Skin Type", ["Oily (Shiny)", "Dry (Tight)", "Normal", "Sensitive"], key="p_skin")
-    p_enemy = st.selectbox("FOCUS PROBLEM", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"], key="p_enemy")
-    p_sins = st.multiselect("Bad Habits", ["Smoking", "Alcohol", "Sugar", "No Sleep", "Stress"], key="p_sins")
-
-    upl = st.file_uploader("Upload Selfie (Required)", type=['jpg', 'png'])
-    
-    if st.button("GENERATE REPORT NOW"):
-        if upl:
-            with st.spinner("SCANNING FACE & DATA..."):
-                data = analyze_skin_with_vision(upl, p_age, p_skin, p_enemy, p_sins)
-                if data:
-                    try:
-                        pdf = create_pdf(data, p_enemy)
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                            pdf.output(tmp.name)
-                            with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Clean.pdf", "application/pdf")
-                        st.success("REPORT GENERATED.")
-                        st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
-                    except Exception as e:
-                        st.error(f"PDF Error: {e}")
-        else:
-            st.error("Upload a photo!")
-# FREE VERSION
 else:
-    with st.form("quiz"):
-        st.write("#### 1. The Dossier:")
-        st.selectbox("Age Group", ["Under 25", "25-35", "35-45", "45+"])
-        st.selectbox("Skin Type", ["Oily (Shiny)", "Dry (Tight)", "Normal", "Sensitive"])
-        st.selectbox("Main Enemy", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"])
-        st.multiselect("Sins", ["Smoking", "Alcohol", "Sugar", "No Sleep", "Stress"])
+    # ==========================================
+    # 🟢 ЧАСТЬ 2: ПРИЛОЖЕНИЕ (ЕСЛИ ОПЛАТИЛИ)
+    # ==========================================
+    
+    st.title("🔥 Skin Roast AI")
+    st.success("✅ Access Granted. Let's fix your face.")
+    
+    st.divider()
+
+    # --- ТВОЙ ОПРОСНИК (DOSSIER) ---
+    st.subheader("1. The Dossier:")
+    
+    age = st.selectbox("Age Group", ["Under 25", "25-34", "35-44", "45-54", "55+"])
+    skin_type = st.selectbox("Skin Type", ["Oily (Shiny)", "Dry (Flaky)", "Combination (T-Zone)", "Sensitive (Red)", "Normal"])
+    main_issue = st.selectbox("Main Enemy", ["Acne / Pimples", "Wrinkles / Aging", "Pigmentation / Spots", "Large Pores", "Dullness / Tired Look"])
+    
+    st.divider()
+    
+    # --- ЗАГРУЗКА ФОТО ---
+    st.subheader("2. The Evidence:")
+    uploaded_file = st.file_uploader("Upload your selfie (No filters!)", type=['jpg', 'png', 'jpeg'])
+
+    if uploaded_file is not None:
+        st.image(uploaded_file, caption="Analyzing...", use_column_width=True)
         
-        st.write("#### 2. Visual Evidence:")
-        st.file_uploader("Upload Selfie", type=['jpg', 'png'])
-        
-        if st.form_submit_button("SCAN FACE"):
-            st.success("SCAN COMPLETE.")
-            st.info("🔥 3 Critical Failures Detected.")
-            st.link_button("👉 UNLOCK FULL REPORT ($10)", LEMON_SQUEEZY_LINK)
+        if st.button("Generate Roast & Routine"):
+            with st.spinner("AI is judging your life choices..."):
+                time.sleep(3) # Имитация работы
+                
+            # Заглушка результата (потом заменим на реальный AI)
+            st.error("💀 ROAST PREVIEW: You look tired. The AI detects sleep deprivation.")
+            st.info("💡 ROUTINE PREVIEW: Drink water right now. Use Retinol at night.")
