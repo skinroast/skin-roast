@@ -164,6 +164,19 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
 
 def clean_text(text):
     if isinstance(text, str):
+        # 1. Replace smart quotes and dashes with simple ASCII versions
+        replacements = {
+            '\u2018': "'",  # Left single quote
+            '\u2019': "'",  # Right single quote (The main culprit for ?)
+            '\u201c': '"',  # Left double quote
+            '\u201d': '"',  # Right double quote
+            '\u2013': '-',  # En dash
+            '\u2014': '-'   # Em dash
+        }
+        for char, replacement in replacements.items():
+            text = text.replace(char, replacement)
+            
+        # 2. Finally encode to latin-1 to be safe for FPDF
         return text.encode('latin-1', 'replace').decode('latin-1')
     return str(text)
 
@@ -256,7 +269,6 @@ def create_pdf(data, problem_name):
     pdf.cell(0, 10, "MORNING:", ln=True)
     pdf.set_font("Helvetica", '', 11)
     
-    # Loop for Morning List
     if isinstance(data.get('routine_morning'), list):
         for idx, step in enumerate(data['routine_morning'], 1):
             pdf.multi_cell(0, 6, txt=f"{idx}. {clean_text(step)}")
@@ -270,7 +282,6 @@ def create_pdf(data, problem_name):
     pdf.cell(0, 10, "EVENING:", ln=True)
     pdf.set_font("Helvetica", '', 11)
     
-    # Loop for Evening List
     if isinstance(data.get('routine_evening'), list):
         for idx, step in enumerate(data['routine_evening'], 1):
             pdf.multi_cell(0, 6, txt=f"{idx}. {clean_text(step)}")
@@ -322,7 +333,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 220 
+CURRENT = 260 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -332,8 +343,8 @@ st.caption("The Protocol for Men.")
 
 # PAYMENT SUCCESS STATE
 if st.query_params.get("paid") == "true":
+    # SUCCESS BOX WITHOUT SNOW
     st.markdown('<div class="success-box">PAYMENT VERIFIED. ACCESS GRANTED.</div>', unsafe_allow_html=True)
-    st.snow() 
     
     st.write("### Configure Analysis:")
     
@@ -354,7 +365,7 @@ if st.query_params.get("paid") == "true":
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Formatted.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Clean.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
