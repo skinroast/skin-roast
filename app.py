@@ -44,34 +44,30 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AI BRAIN (FOCUSED SPECIALIST) ---
+# --- 2. AI BRAIN ---
 SYSTEM_PROMPT = """
 YOU ARE "SKIN ROAST BRO".
-TONE: Funny, supportive, honest.
-GOAL: Analyze ONLY the specific problem the user selected.
+GOAL: Create a COMPREHENSIVE, HIGH-VALUE protocol.
 
 INSTRUCTIONS:
-1. START with a light playful roast about their habits (Alcohol/Stress). Make a joke.
-2. ANALYZE the *User Selected Problem* deeply based on the photo.
-   - If they chose "Wrinkles": Describe depth, location (forehead, eyes), and severity.
-   - If they chose "Acne": Describe inflammation type, zones.
-3. DETECT but DO NOT SOLVE other issues. Mention them as "Also detected".
-4. GENERATE A ROUTINE ONLY FOR THE SELECTED PROBLEM.
+1. ROAST: Start with a funny roast about habits.
+2. DEEP SCAN: Analyze the SELECTED problem in detail.
+3. CLINICAL PROCEDURES: Recommend 2-3 professional treatments (Botox, Laser, Peels).
+4. ROUTINE: Detailed steps. Mention SPF usage!
 
 RESPONSE FORMAT (JSON ONLY):
 {
-  "roast_intro": "Light roast + joke about their habits (Alcohol, No Sleep). Keep it fun.",
-  
-  "deep_dive_analysis": "Detailed analysis of the SELECTED problem (e.g. Wrinkles). Describe exactly what you see in the photo regarding this specific issue. (4-5 sentences).",
-  
-  "other_issues_teaser": "List 2-3 OTHER problems you see in the photo (e.g. 'I also see large pores and redness...'), but add: 'But today we focus only on your main request.'",
-  
+  "roast_intro": "Funny roast + Intro.",
+  "deep_dive_analysis": "Detailed visual analysis (5-6 sentences).",
+  "other_issues_teaser": "List 2-3 other detected issues.",
   "ingredients": [
-      {"name": "Ingredient Name", "why": "How it fixes the SELECTED problem"}
+      {"name": "Active Ingredient", "why": "Scientific explanation"}
   ],
-  
-  "routine_morning": "Step-by-step morning routine for the SELECTED problem.",
-  "routine_evening": "Step-by-step evening routine for the SELECTED problem."
+  "clinical_treatments": [
+      {"name": "Procedure Name", "why": "What it does"}
+  ],
+  "routine_morning": "Detailed AM steps.",
+  "routine_evening": "Detailed PM steps."
 }
 """
 
@@ -82,13 +78,9 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
     if not openai.api_key:
         return None
     
-    # 1. Prepare Image
     base64_image = encode_image(image_file)
-    
-    # 2. Prepare Data Text
     habits_str = ", ".join(habits) if habits else "None"
-    # IMPORTANT: We tell AI to focus ONLY on 'problem'
-    user_text = f"User Data: Age {age}, Skin Type {skin_type}. FOCUS PROBLEM: {problem}. Habits to roast: {habits_str}."
+    user_text = f"User Data: Age {age}, Skin Type {skin_type}. FOCUS PROBLEM: {problem}. Habits: {habits_str}."
 
     try:
         response = openai.chat.completions.create(
@@ -101,7 +93,7 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]}
             ],
-            max_tokens=1500
+            max_tokens=2000
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
@@ -109,52 +101,66 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
         return None
 
 def clean_text(text):
-    """Helper to remove bad characters for PDF"""
     if isinstance(text, str):
         return text.encode('latin-1', 'replace').decode('latin-1')
     return str(text)
 
 def create_pdf(data, problem_name):
-    """Generate PDF with CAPITALISM JOKE"""
+    """Generate PDF with SAFETY PROTOCOLS"""
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # --- PAGE 1: ANALYSIS ---
+    # --- PAGE 1 ---
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 24)
     pdf.cell(0, 20, "YOUR UPGRADE PLAN", ln=True, align='C')
     pdf.ln(5)
     
-    # 1. ROAST & JOKE
+    # ROAST
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "THE VIBE CHECK:", ln=True)
     pdf.set_font("Helvetica", '', 11)
     pdf.multi_cell(0, 6, txt=clean_text(data['roast_intro']))
     pdf.ln(5)
 
-    # 2. DEEP DIVE (SELECTED PROBLEM)
+    # DEEP SCAN
     pdf.set_font("Helvetica", 'B', 14)
-    # Dynamic Title
     clean_problem = clean_text(problem_name).upper()
     pdf.cell(0, 10, f"DEEP SCAN: {clean_problem}", ln=True)
     pdf.set_font("Helvetica", '', 11)
     pdf.multi_cell(0, 6, txt=clean_text(data['deep_dive_analysis']))
     pdf.ln(10)
     
-    # 3. TEASER (OTHER ISSUES)
+    # TEASER
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.set_text_color(100, 100, 100) # Grey color for teaser
+    pdf.set_text_color(100, 100, 100)
     pdf.cell(0, 10, "ALSO DETECTED (NOT INCLUDED):", ln=True)
     pdf.set_font("Helvetica", 'I', 11)
     pdf.multi_cell(0, 6, txt=clean_text(data['other_issues_teaser']))
-    pdf.multi_cell(0, 6, txt="(You can order a separate report for these issues later.)")
-    pdf.set_text_color(0, 0, 0) # Reset color
+    pdf.set_text_color(0, 0, 0)
     
-    # --- PAGE 2: ACTION ---
+    # --- PAGE 2 ---
     pdf.add_page()
     
+    # CLINICAL
     pdf.set_font("Helvetica", 'B', 18)
-    pdf.cell(0, 15, "YOUR WEAPONS", ln=True, align='C')
+    pdf.cell(0, 15, "CLINICAL PROTOCOL (PRO LEVEL)", ln=True, align='C')
+    pdf.set_font("Helvetica", '', 11)
+    pdf.multi_cell(0, 6, txt="Professional treatments for faster results. Consult a certified doctor first.", align='C')
+    pdf.ln(5)
+
+    for item in data['clinical_treatments']:
+        pdf.set_font("Helvetica", 'B', 13)
+        pdf.cell(0, 8, txt=f"[*] {clean_text(item['name'])}", ln=True)
+        pdf.set_font("Helvetica", '', 11)
+        pdf.multi_cell(0, 5, txt=f"Target: {clean_text(item['why'])}\n")
+        pdf.ln(2)
+
+    pdf.ln(5)
+
+    # INGREDIENTS
+    pdf.set_font("Helvetica", 'B', 18)
+    pdf.cell(0, 15, "YOUR HOME WEAPONS", ln=True, align='C')
     
     for item in data['ingredients']:
         pdf.set_font("Helvetica", 'B', 13)
@@ -163,10 +169,27 @@ def create_pdf(data, problem_name):
         pdf.multi_cell(0, 5, txt=f"Why: {clean_text(item['why'])}\n")
         pdf.ln(2)
 
-    pdf.ln(5)
+    # --- PAGE 3 ---
+    pdf.add_page()
+    
+    # --- SAFETY WARNING (NEW!) ---
+    pdf.set_fill_color(255, 200, 200) # Light Red Background
+    pdf.set_font("Helvetica", 'B', 12)
+    pdf.cell(0, 10, "⚠️ SAFETY PROTOCOL (READ THIS):", ln=True, fill=True)
+    pdf.set_font("Helvetica", '', 11)
+    safety_text = (
+        "1. Active ingredients (Retinol, Acids) are powerful. They can burn if misused.\n"
+        "2. ALWAYS use SPF 30+ if you use Retinol or Acids. No excuses.\n"
+        "3. PATCH TEST: Apply a small amount on your neck before putting it on your face.\n"
+        "4. Start slowly: Use Retinol 2 times a week, then increase.\n"
+        "5. Check for allergies and read the instructions on the bottle."
+    )
+    pdf.multi_cell(0, 6, txt=safety_text)
+    pdf.ln(10)
 
+    # ROUTINE
     pdf.set_font("Helvetica", 'B', 18)
-    pdf.cell(0, 15, "THE ROUTINE", ln=True, align='C')
+    pdf.cell(0, 15, "DAILY OPERATIONS", ln=True, align='C')
     
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "MORNING:", ln=True)
@@ -179,27 +202,40 @@ def create_pdf(data, problem_name):
     pdf.set_font("Helvetica", '', 11)
     pdf.multi_cell(0, 6, txt=clean_text(data['routine_evening']))
 
-    pdf.ln(15)
+    pdf.ln(10)
     
-    # --- THE CAPITALISM JOKE ---
+    # JOKE
     pdf.set_font("Helvetica", 'B', 12)
     pdf.cell(0, 10, "HONEST NOTE:", ln=True, align='C')
     pdf.set_font("Helvetica", '', 11)
     
-    # The Joke Text
     joke_text = (
-        "You can find the right cosmetics by active substance yourself through GPT or Gemini completely free of charge. "
+        "You can find these cosmetics by active substance yourself through GPT or Gemini completely free of charge. "
         "But since I am saving for a house and a car, in the best traditions of capitalism, "
         "I offer you to buy a ready-made list for $5."
     )
-    
     pdf.multi_cell(0, 6, txt=joke_text, align='C')
     pdf.ln(5)
 
+    # LINK
     pdf.set_text_color(200, 0, 0)
     pdf.set_font("Helvetica", 'B', 12)
     pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_LINK)
     
+    pdf.ln(15)
+    
+    # --- MEDICAL DISCLAIMER (NEW!) ---
+    pdf.set_text_color(100, 100, 100) # Grey
+    pdf.set_font("Helvetica", 'I', 8)
+    disclaimer = (
+        "MEDICAL DISCLAIMER: This report is generated by AI for informational purposes only. "
+        "It does not constitute medical advice, diagnosis, or treatment. "
+        "Always seek the advice of a qualified physician or dermatologist with any questions you may have regarding a medical condition. "
+        "Never disregard professional medical advice or delay in seeking it because of something you have read in this report. "
+        "The user assumes full responsibility for the use of any recommended products."
+    )
+    pdf.multi_cell(0, 4, txt=disclaimer, align='C')
+
     return pdf
 
 # --- 3. UI INTERFACE ---
@@ -211,7 +247,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 70 
+CURRENT = 90 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -226,37 +262,30 @@ if st.query_params.get("paid") == "true":
     
     st.write("### Configure Analysis:")
     
-    # Input Data
     p_age = st.selectbox("Your Age", ["Under 25", "25-35", "35-45", "45+"], key="p_age")
     p_skin = st.selectbox("Skin Type", ["Oily (Shiny)", "Dry (Tight)", "Normal", "Sensitive"], key="p_skin")
-    # THE MAIN FOCUS
-    p_enemy = st.selectbox("FOCUS PROBLEM (What do we fix today?)", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"], key="p_enemy")
-    p_sins = st.multiselect("Bad Habits (For the roast)", ["Smoking", "Alcohol", "Sugar", "No Sleep", "Stress"], key="p_sins")
+    p_enemy = st.selectbox("FOCUS PROBLEM", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"], key="p_enemy")
+    p_sins = st.multiselect("Bad Habits", ["Smoking", "Alcohol", "Sugar", "No Sleep", "Stress"], key="p_sins")
 
-    # Image Upload
     upl = st.file_uploader("Upload Selfie (Required)", type=['jpg', 'png'])
     
     if st.button("GENERATE REPORT NOW"):
         if upl:
-            with st.spinner("ANALYZING YOUR SELECTED PROBLEM..."):
-                # CALLING THE REAL VISION AI
+            with st.spinner("GENERATING CLINICAL PROTOCOL..."):
                 data = analyze_skin_with_vision(upl, p_age, p_skin, p_enemy, p_sins)
-                
                 if data:
                     try:
-                        # Pass p_enemy to PDF for the title
                         pdf = create_pdf(data, p_enemy)
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD DOSSIER (PDF)", f, "Skin_Roast_Plan_Focus.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Full.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
                         st.error(f"PDF Error: {e}")
         else:
             st.error("Upload a photo!")
-
 # FREE VERSION
 else:
     with st.form("quiz"):
