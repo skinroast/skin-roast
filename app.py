@@ -9,13 +9,13 @@ import os
 if "OPENAI_API_KEY" in st.secrets:
     openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# LINKS (REPLACE WITH YOURS LATER)
+# LINKS
 LEMON_SQUEEZY_LINK = "https://skin-roast.lemonsqueezy.com/buy" 
 UPSELL_LINK = "https://skin-roast.lemonsqueezy.com/buy"
 
 st.set_page_config(page_title="Skin Roast: Upgrade Plan", page_icon="🔥", layout="centered")
 
-# CSS HACK: Hide Streamlit branding & Style Buttons
+# CSS HACK
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -32,32 +32,30 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AI BRAIN (BRO PROMPT - ENGLISH) ---
+# --- 2. AI BRAIN (SAFE MODE - NO EMOJIS IN OUTPUT) ---
 SYSTEM_PROMPT = """
-YOU ARE "SKIN ROAST BRO". You are the user's best friend and mentor.
-Your goal is to help your bro become handsome using the "Sandwich Method":
-[Recognition of Potential] -> [Roast of Bad Habits] -> [Motivation].
-
-TONE OF VOICE:
-- Address user as "Bro", "Champ", "Man".
-- Metaphors: Jaguar V12, Lake Oswego, NBA, Wall Street, Survival Mode.
-- NO insults to personality. Roast the LAZINESS and the BAD SKIN HABITS only.
+YOU ARE "SKIN ROAST BRO".
+Your goal is to help your bro become handsome.
+TONE:
+- Address user as "Bro", "Champ".
+- Metaphors: Jaguar V12, Wall Street.
+- Roast laziness, not the person.
+- IMPORTANT: DO NOT USE EMOJIS IN YOUR RESPONSE TEXT. ONLY TEXT.
 
 RESPONSE FORMAT (JSON ONLY):
 {
-  "roast": "Roast text (3-4 punchy sentences)",
+  "roast": "Roast text (3-4 sentences)",
   "problems_list": ["Problem 1", "Problem 2"],
   "ingredients": [
-      {"name": "Ingredient Name", "why": "Why it works (1 sentence)"}
+      {"name": "Ingredient Name", "why": "Why it works"}
   ],
-  "routine_morning": "Morning steps bullet points",
-  "routine_evening": "Evening steps bullet points",
-  "motivation": "Final motivational quote"
+  "routine_morning": "Morning steps",
+  "routine_evening": "Evening steps",
+  "motivation": "Final quote"
 }
 """
 
 def analyze_skin(age, skin_type, problem, habits):
-    """Call OpenAI"""
     if not openai.api_key:
         return None  
     user_prompt = f"Data: Age {age}, Skin {skin_type}, Problem {problem}, Sins {habits}."
@@ -72,57 +70,65 @@ def analyze_skin(age, skin_type, problem, habits):
         return None
 
 def create_pdf(data):
-    """Generate English PDF"""
+    """Generate PDF (Clean Text Only)"""
     pdf = FPDF()
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Fonts are standard in English (Arial/Helvetica)
-    pdf.set_font("Helvetica", 'B', 28)
+    # Fonts
+    pdf.set_font("Helvetica", 'B', 24)
     pdf.cell(0, 20, "YOUR UPGRADE PLAN", ln=True, align='C')
-    pdf.ln(10)
+    pdf.ln(5)
     
-    pdf.set_font("Helvetica", '', 14)
-    pdf.multi_cell(0, 10, txt=f"VERDICT: {data['roast']}")
-    pdf.ln(10)
+    pdf.set_font("Helvetica", '', 12)
+    # Encode to latin-1 to handle any accidental special chars, replacing errors
+    roast_text = data['roast'].encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 8, txt=f"VERDICT:\n{roast_text}")
+    pdf.ln(5)
     
-    pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "IDENTIFIED ISSUES:", ln=True)
     pdf.set_font("Helvetica", '', 12)
     for prob in data['problems_list']:
-        pdf.cell(0, 8, txt=f"- {prob}", ln=True)
+        clean_prob = prob.encode('latin-1', 'replace').decode('latin-1')
+        pdf.cell(0, 8, txt=f"- {clean_prob}", ln=True)
 
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 22)
-    pdf.cell(0, 20, "YOUR WEAPONS (ARSENAL)", ln=True, align='C')
-    pdf.ln(10)
+    pdf.ln(5)
+    pdf.set_font("Helvetica", 'B', 18)
+    pdf.cell(0, 15, "YOUR WEAPONS (ARSENAL)", ln=True, align='C')
     
     for item in data['ingredients']:
-        pdf.set_font("Helvetica", 'B', 16)
-        pdf.cell(0, 10, txt=f"🧪 {item['name']}", ln=True)
+        pdf.set_font("Helvetica", 'B', 14)
+        clean_name = item['name'].encode('latin-1', 'replace').decode('latin-1')
+        clean_why = item['why'].encode('latin-1', 'replace').decode('latin-1')
+        
+        pdf.cell(0, 10, txt=f"[+] {clean_name}", ln=True)
         pdf.set_font("Helvetica", '', 12)
-        pdf.multi_cell(0, 6, txt=f"Why: {item['why']}\n")
-        pdf.ln(5)
+        pdf.multi_cell(0, 6, txt=f"Why: {clean_why}\n")
+        pdf.ln(2)
 
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 22)
-    pdf.cell(0, 20, "BATTLE PLAN (ROUTINE)", ln=True, align='C')
+    pdf.set_font("Helvetica", 'B', 18)
+    pdf.cell(0, 15, "BATTLE PLAN", ln=True, align='C')
     
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.cell(0, 15, "☀️ MORNING:", ln=True)
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, "MORNING:", ln=True)
     pdf.set_font("Helvetica", '', 12)
-    pdf.multi_cell(0, 6, txt=data['routine_morning'])
-    pdf.ln(10)
+    clean_morning = data['routine_morning'].encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 6, txt=clean_morning)
+    pdf.ln(5)
     
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.cell(0, 15, "🌙 EVENING:", ln=True)
-    pdf.multi_cell(0, 6, txt=data['routine_evening'])
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, "EVENING:", ln=True)
+    clean_evening = data['routine_evening'].encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 6, txt=clean_evening)
 
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 26)
-    pdf.cell(0, 30, "DON'T BE STUPID", ln=True, align='C')
-    pdf.set_font("Helvetica", '', 14)
-    pdf.multi_cell(0, 10, txt="You know the theory. But if you buy trash products, you'll make it worse.\n\nI curated a list of products that actually work.\n\nClick below to get the shopping list.", align='C')
-    pdf.ln(20)
+    pdf.ln(10)
+    pdf.set_font("Helvetica", 'B', 20)
+    pdf.cell(0, 20, "DON'T BE STUPID", ln=True, align='C')
+    pdf.set_font("Helvetica", '', 12)
+    pdf.multi_cell(0, 8, txt="You know the theory. Now get the right tools.\nI curated a list of products that actually work.\n", align='C')
+    pdf.ln(5)
     
     pdf.set_text_color(0, 0, 255)
     pdf.set_font("Helvetica", 'U', 14)
@@ -130,8 +136,6 @@ def create_pdf(data):
     return pdf
 
 # --- 3. UI INTERFACE ---
-
-# THE LEGEND (ENGLISH)
 st.warning("""
 ⚠️ **HONEST WARNING:**
 There is no fancy design here because I'm saving money.
@@ -144,7 +148,6 @@ I promise this: **when you make it big, you will look the part.**
 Fix your face now, so you don't feel ashamed to drop the roof of your convertible later.
 """)
 
-# GOAL TRACKER
 GOAL = 6150000 
 CURRENT = 40 
 st.progress(CURRENT / GOAL)
@@ -154,6 +157,7 @@ st.divider()
 st.title("SKIN ROAST 🔥")
 st.caption("No-BS Personal Grooming Plan.")
 
+# HACK: Manual Payment Check
 if st.query_params.get("paid") == "true":
     st.balloons()
     st.success("Welcome to the club.")
@@ -163,16 +167,21 @@ if st.query_params.get("paid") == "true":
         if st.form_submit_button("GENERATE MY PLAN"):
             if upl:
                 with st.spinner("Analyzing..."):
-                    # Mock data for MVP test
-                    data = analyze_skin("30", "Oily", "Acne", "No Sleep")
+                    # Use REAL AI now
+                    data = analyze_skin("25-35", "Oily", "Acne", "No Sleep")
                     if data:
-                        pdf = create_pdf(data)
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                            pdf.output(tmp.name)
-                            with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD PLAN (PDF)", f, "Skin_Roast_Plan.pdf", "application/pdf")
-                        st.warning("Don't guess. Get the product list below.")
-                        st.link_button("GET SHOPPING LIST ($5)", UPSELL_LINK)
+                        try:
+                            pdf = create_pdf(data)
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                                pdf.output(tmp.name)
+                                with open(tmp.name, "rb") as f:
+                                    st.download_button("⬇️ DOWNLOAD PLAN (PDF)", f, "Skin_Roast_Plan.pdf", "application/pdf")
+                            st.warning("Don't guess. Get the product list below.")
+                            st.link_button("GET SHOPPING LIST ($5)", UPSELL_LINK)
+                        except Exception as e:
+                            st.error(f"Error generating PDF: {e}")
+            else:
+                st.error("Upload a photo first!")
 else:
     with st.form("quiz"):
         st.write("#### 1. The Dossier:")
