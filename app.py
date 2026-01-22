@@ -44,34 +44,38 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AI BRAIN (VISION + BRO TONE) ---
+# --- 2. AI BRAIN (DEEP VISION PROTOCOL) ---
 SYSTEM_PROMPT = """
 YOU ARE "SKIN ROAST BRO".
 You are the user's best friend/coach who knows everything about skincare.
-TONE: Supportive, masculine, funny, but NOT toxic. 
-Metaphors: Sports, Cars, Business, "Wall Street", "The Game".
+TONE: Supportive, masculine, detailed, authoritative.
+Metaphors: Mechanics, Engineering, Architecture, "The Game".
 
-YOUR GOAL:
-1. Roast the bad habits playfully (like a best friend would).
-2. Analyze the PHOTO and DATA strictly.
-3. Give a clear battle plan to fix it.
+YOUR GOAL: Perform a DEEP visual scan of the user's photo and compare it to their data.
 
-IMPORTANT: 
-- DO NOT be mean or insulting. 
-- Use "Bro", "Champ", "Man".
-- DO NOT USE EMOJIS IN THE JSON RESPONSE.
+INSTRUCTIONS FOR ANALYSIS:
+1. Look closely at the photo. Identify textures, colors, depth of lines, and oiliness.
+2. COMPARE the photo with the user's self-reported data.
+3. IF they missed something (e.g., they said "Acne" but you see "Wrinkles"), POINT IT OUT.
+4. WRITE IN DETAIL. Do not write short sentences. Write full paragraphs.
 
-RESPONSE FORMAT (JSON ONLY):
+RESPONSE FORMAT (JSON ONLY - NO EMOJIS):
 {
-  "roast": "Playful roast observation (e.g., 'You look like you pulled an all-nighter closing a deal, but your eyes are paying the price.').",
-  "science_why": "Scientific explanation of what is happening on his face.",
-  "problems_list": ["Problem 1", "Problem 2", "Problem 3"],
+  "intro_roast": "A friendly but sharp opening roast (3-4 sentences). Acknowledge their effort but highlight the reality.",
+  
+  "visual_scan": "DETAILED VISUAL ANALYSIS (5-7 sentences). Use this structure: 'I looked at your photo. You mentioned [User Problem], and yes, it is present. HOWEVER, I also see [Other Issue] that you didn't mention...'. Describe specifically what you see (forehead lines, redness size, dark circles depth).",
+  
+  "science_why": "Explain the biological reasons for what you saw in the visual scan (3-4 sentences). Use terms like 'Collagen density', 'Lipid barrier', 'Cortisol spikes'.",
+  
+  "problems_list": ["Visual Issue 1", "Visual Issue 2", "Visual Issue 3"],
+  
   "ingredients": [
-      {"name": "Ingredient Name", "why": "Simple explanation why it helps"}
+      {"name": "Ingredient Name", "why": "Detailed explanation of how this fixes the specific visual issue"}
   ],
-  "routine_morning": "Step-by-step morning routine.",
-  "routine_evening": "Step-by-step evening routine.",
-  "motivation": "Final motivating quote about success and discipline."
+  
+  "routine_morning": "Detailed step-by-step morning routine.",
+  "routine_evening": "Detailed step-by-step evening routine.",
+  "motivation": "Final strong closing statement about discipline and consistency."
 }
 """
 
@@ -100,7 +104,7 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]}
             ],
-            max_tokens=1000
+            max_tokens=1500 # Increased token limit for longer answers
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
@@ -114,88 +118,78 @@ def clean_text(text):
     return str(text)
 
 def create_pdf(data):
-    """Generate PDF (Bro Edition)"""
+    """Generate RICH PDF"""
     pdf = FPDF()
-    pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Fonts
+    # --- PAGE 1: ANALYSIS ---
+    pdf.add_page()
     pdf.set_font("Helvetica", 'B', 24)
     pdf.cell(0, 20, "YOUR UPGRADE PLAN", ln=True, align='C')
     pdf.ln(5)
     
-    # 1. THE ROAST
+    # 1. INTRO
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "THE REALITY CHECK:", ln=True)
+    pdf.cell(0, 10, "REALITY CHECK:", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    
-    text_roast = clean_text(data['roast'])
-    pdf.multi_cell(0, 6, txt=text_roast)
+    pdf.multi_cell(0, 6, txt=clean_text(data['intro_roast']))
     pdf.ln(5)
 
-    # 2. THE SCIENCE
+    # 2. DEEP VISUAL SCAN (The new thick part)
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "THE SCIENCE:", ln=True)
+    pdf.cell(0, 10, "VISUAL EVIDENCE (FROM PHOTO):", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    
-    text_science = clean_text(data['science_why'])
-    pdf.multi_cell(0, 6, txt=text_science)
+    pdf.multi_cell(0, 6, txt=clean_text(data['visual_scan']))
     pdf.ln(5)
     
-    # 3. IDENTIFIED ISSUES
+    # 3. THE SCIENCE
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, "THE BIOLOGY:", ln=True)
+    pdf.set_font("Helvetica", '', 11)
+    pdf.multi_cell(0, 6, txt=clean_text(data['science_why']))
+    pdf.ln(5)
+    
+    # 4. SUMMARY
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "DETECTED ISSUES:", ln=True)
     pdf.set_font("Helvetica", '', 11)
     for prob in data['problems_list']:
-        text_prob = clean_text(prob)
-        pdf.cell(0, 6, txt=f"[X] {text_prob}", ln=True)
+        pdf.cell(0, 6, txt=f"[X] {clean_text(prob)}", ln=True)
 
-    pdf.ln(10)
+    # --- PAGE 2: ACTION ---
+    pdf.add_page()
     
-    pdf.add_page() # --- PAGE 2 ---
-
-    # 4. WEAPONS
     pdf.set_font("Helvetica", 'B', 18)
     pdf.cell(0, 15, "YOUR WEAPONS (ARSENAL)", ln=True, align='C')
     
     for item in data['ingredients']:
         pdf.set_font("Helvetica", 'B', 13)
-        name = clean_text(item['name'])
-        why = clean_text(item['why'])
-        
-        pdf.cell(0, 8, txt=f"[+] {name}", ln=True)
+        pdf.cell(0, 8, txt=f"[+] {clean_text(item['name'])}", ln=True)
         pdf.set_font("Helvetica", '', 11)
-        pdf.multi_cell(0, 5, txt=f"Target: {why}\n")
+        pdf.multi_cell(0, 5, txt=f"Target: {clean_text(item['why'])}\n")
         pdf.ln(2)
 
     pdf.ln(5)
 
-    # 5. ROUTINE
     pdf.set_font("Helvetica", 'B', 18)
     pdf.cell(0, 15, "BATTLE PLAN", ln=True, align='C')
     
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "MORNING:", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    
-    text_morning = clean_text(data['routine_morning'])
-    pdf.multi_cell(0, 6, txt=text_morning)
+    pdf.multi_cell(0, 6, txt=clean_text(data['routine_morning']))
     pdf.ln(5)
     
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "EVENING:", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    
-    text_evening = clean_text(data['routine_evening'])
-    pdf.multi_cell(0, 6, txt=text_evening)
+    pdf.multi_cell(0, 6, txt=clean_text(data['routine_evening']))
 
     pdf.ln(15)
     pdf.set_font("Helvetica", 'B', 16)
     pdf.cell(0, 10, "FINAL WORD", ln=True, align='C')
     pdf.set_font("Helvetica", 'I', 12)
-    
-    text_motivation = clean_text(data['motivation'])
-    pdf.multi_cell(0, 8, txt=text_motivation, align='C')
+    pdf.multi_cell(0, 8, txt=clean_text(data['motivation']), align='C')
 
     pdf.ln(10)
     pdf.set_text_color(200, 0, 0)
@@ -213,7 +207,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 50 
+CURRENT = 60 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -239,7 +233,7 @@ if st.query_params.get("paid") == "true":
     
     if st.button("GENERATE REPORT NOW"):
         if upl:
-            with st.spinner("SCANNING FACE & DATA..."):
+            with st.spinner("SCANNING FACE & DATA... (This takes 10-15 seconds)"):
                 # CALLING THE REAL VISION AI
                 data = analyze_skin_with_vision(upl, p_age, p_skin, p_enemy, p_sins)
                 
@@ -249,7 +243,7 @@ if st.query_params.get("paid") == "true":
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD DOSSIER (PDF)", f, "Skin_Roast_Plan.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD DOSSIER (PDF)", f, "Skin_Roast_Plan_Deep.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
