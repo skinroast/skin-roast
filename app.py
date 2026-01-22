@@ -77,7 +77,7 @@ TREATMENT_LOGIC = {
     }
 }
 
-# --- 4. AI BRAIN (OBSERVATIONAL COMEDY MODE) ---
+# --- 4. AI BRAIN (OBSERVATIONAL COMEDY) ---
 SYSTEM_PROMPT = """
 YOU ARE A STAND-UP COMEDIAN & DERMATOLOGIST.
 Tone: Sharp, Observational, "No Filter". 
@@ -163,21 +163,40 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
         return None
 
 def clean_text(text):
+    """
+    Cleans text for PDF generation by replacing incompatible unicode characters
+    with ASCII equivalents.
+    """
     if isinstance(text, str):
-        # 1. Replace smart quotes and dashes with simple ASCII versions
+        # Dictionary of common "Smart" characters to "Simple" characters
         replacements = {
-            '\u2018': "'",  # Left single quote
-            '\u2019': "'",  # Right single quote (The main culprit for ?)
-            '\u201c': '"',  # Left double quote
-            '\u201d': '"',  # Right double quote
-            '\u2013': '-',  # En dash
-            '\u2014': '-'   # Em dash
+            '\u2018': "'",   # Left Single Quote
+            '\u2019': "'",   # Right Single Quote (The specific crasher)
+            '\u201a': ",",   # Single low quotation mark
+            '\u201b': "'",   # Single high-reversed-9 quotation mark
+            '\u201c': '"',   # Left Double Quote
+            '\u201d': '"',   # Right Double Quote
+            '\u201e': '"',   # Double low quotation mark
+            '\u2026': '...', # Ellipsis
+            '\u2013': '-',   # En dash
+            '\u2014': '-',   # Em dash
+            '\u02bc': "'",   # Modifier letter apostrophe
+            '\u00a0': ' ',   # Non-breaking space
+            '’': "'",        # Another variation of apostrophe
+            '‘': "'",
+            '“': '"',
+            '”': '"',
+            '–': '-'
         }
+        
+        # Apply all replacements
         for char, replacement in replacements.items():
             text = text.replace(char, replacement)
             
-        # 2. Finally encode to latin-1 to be safe for FPDF
+        # Final safety net: Force Encode to Latin-1, replacing unknown with '?'
+        # (But since we mapped the common ones, '?' should rarely appear)
         return text.encode('latin-1', 'replace').decode('latin-1')
+        
     return str(text)
 
 def create_pdf(data, problem_name):
