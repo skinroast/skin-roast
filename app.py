@@ -44,38 +44,34 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. AI BRAIN (DEEP VISION PROTOCOL) ---
+# --- 2. AI BRAIN (FOCUSED SPECIALIST) ---
 SYSTEM_PROMPT = """
 YOU ARE "SKIN ROAST BRO".
-You are the user's best friend/coach who knows everything about skincare.
-TONE: Supportive, masculine, detailed, authoritative.
-Metaphors: Mechanics, Engineering, Architecture, "The Game".
+TONE: Funny, supportive, honest.
+GOAL: Analyze ONLY the specific problem the user selected.
 
-YOUR GOAL: Perform a DEEP visual scan of the user's photo and compare it to their data.
+INSTRUCTIONS:
+1. START with a light playful roast about their habits (Alcohol/Stress). Make a joke.
+2. ANALYZE the *User Selected Problem* deeply based on the photo.
+   - If they chose "Wrinkles": Describe depth, location (forehead, eyes), and severity.
+   - If they chose "Acne": Describe inflammation type, zones.
+3. DETECT but DO NOT SOLVE other issues. Mention them as "Also detected".
+4. GENERATE A ROUTINE ONLY FOR THE SELECTED PROBLEM.
 
-INSTRUCTIONS FOR ANALYSIS:
-1. Look closely at the photo. Identify textures, colors, depth of lines, and oiliness.
-2. COMPARE the photo with the user's self-reported data.
-3. IF they missed something (e.g., they said "Acne" but you see "Wrinkles"), POINT IT OUT.
-4. WRITE IN DETAIL. Do not write short sentences. Write full paragraphs.
-
-RESPONSE FORMAT (JSON ONLY - NO EMOJIS):
+RESPONSE FORMAT (JSON ONLY):
 {
-  "intro_roast": "A friendly but sharp opening roast (3-4 sentences). Acknowledge their effort but highlight the reality.",
+  "roast_intro": "Light roast + joke about their habits (Alcohol, No Sleep). Keep it fun.",
   
-  "visual_scan": "DETAILED VISUAL ANALYSIS (5-7 sentences). Use this structure: 'I looked at your photo. You mentioned [User Problem], and yes, it is present. HOWEVER, I also see [Other Issue] that you didn't mention...'. Describe specifically what you see (forehead lines, redness size, dark circles depth).",
+  "deep_dive_analysis": "Detailed analysis of the SELECTED problem (e.g. Wrinkles). Describe exactly what you see in the photo regarding this specific issue. (4-5 sentences).",
   
-  "science_why": "Explain the biological reasons for what you saw in the visual scan (3-4 sentences). Use terms like 'Collagen density', 'Lipid barrier', 'Cortisol spikes'.",
-  
-  "problems_list": ["Visual Issue 1", "Visual Issue 2", "Visual Issue 3"],
+  "other_issues_teaser": "List 2-3 OTHER problems you see in the photo (e.g. 'I also see large pores and redness...'), but add: 'But today we focus only on your main request.'",
   
   "ingredients": [
-      {"name": "Ingredient Name", "why": "Detailed explanation of how this fixes the specific visual issue"}
+      {"name": "Ingredient Name", "why": "How it fixes the SELECTED problem"}
   ],
   
-  "routine_morning": "Detailed step-by-step morning routine.",
-  "routine_evening": "Detailed step-by-step evening routine.",
-  "motivation": "Final strong closing statement about discipline and consistency."
+  "routine_morning": "Step-by-step morning routine for the SELECTED problem.",
+  "routine_evening": "Step-by-step evening routine for the SELECTED problem."
 }
 """
 
@@ -91,7 +87,8 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
     
     # 2. Prepare Data Text
     habits_str = ", ".join(habits) if habits else "None"
-    user_text = f"User Data: Age {age}, Skin Type {skin_type}, Main Complaint {problem}, Bad Habits: {habits_str}."
+    # IMPORTANT: We tell AI to focus ONLY on 'problem'
+    user_text = f"User Data: Age {age}, Skin Type {skin_type}. FOCUS PROBLEM: {problem}. Habits to roast: {habits_str}."
 
     try:
         response = openai.chat.completions.create(
@@ -104,7 +101,7 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]}
             ],
-            max_tokens=1500 # Increased token limit for longer answers
+            max_tokens=1500
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
@@ -117,8 +114,8 @@ def clean_text(text):
         return text.encode('latin-1', 'replace').decode('latin-1')
     return str(text)
 
-def create_pdf(data):
-    """Generate RICH PDF"""
+def create_pdf(data, problem_name):
+    """Generate PDF with CAPITALISM JOKE"""
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
@@ -128,51 +125,48 @@ def create_pdf(data):
     pdf.cell(0, 20, "YOUR UPGRADE PLAN", ln=True, align='C')
     pdf.ln(5)
     
-    # 1. INTRO
+    # 1. ROAST & JOKE
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "REALITY CHECK:", ln=True)
+    pdf.cell(0, 10, "THE VIBE CHECK:", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['intro_roast']))
+    pdf.multi_cell(0, 6, txt=clean_text(data['roast_intro']))
     pdf.ln(5)
 
-    # 2. DEEP VISUAL SCAN (The new thick part)
+    # 2. DEEP DIVE (SELECTED PROBLEM)
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "VISUAL EVIDENCE (FROM PHOTO):", ln=True)
+    # Dynamic Title
+    clean_problem = clean_text(problem_name).upper()
+    pdf.cell(0, 10, f"DEEP SCAN: {clean_problem}", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['visual_scan']))
-    pdf.ln(5)
+    pdf.multi_cell(0, 6, txt=clean_text(data['deep_dive_analysis']))
+    pdf.ln(10)
     
-    # 3. THE SCIENCE
+    # 3. TEASER (OTHER ISSUES)
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "THE BIOLOGY:", ln=True)
-    pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['science_why']))
-    pdf.ln(5)
+    pdf.set_text_color(100, 100, 100) # Grey color for teaser
+    pdf.cell(0, 10, "ALSO DETECTED (NOT INCLUDED):", ln=True)
+    pdf.set_font("Helvetica", 'I', 11)
+    pdf.multi_cell(0, 6, txt=clean_text(data['other_issues_teaser']))
+    pdf.multi_cell(0, 6, txt="(You can order a separate report for these issues later.)")
+    pdf.set_text_color(0, 0, 0) # Reset color
     
-    # 4. SUMMARY
-    pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "DETECTED ISSUES:", ln=True)
-    pdf.set_font("Helvetica", '', 11)
-    for prob in data['problems_list']:
-        pdf.cell(0, 6, txt=f"[X] {clean_text(prob)}", ln=True)
-
     # --- PAGE 2: ACTION ---
     pdf.add_page()
     
     pdf.set_font("Helvetica", 'B', 18)
-    pdf.cell(0, 15, "YOUR WEAPONS (ARSENAL)", ln=True, align='C')
+    pdf.cell(0, 15, "YOUR WEAPONS", ln=True, align='C')
     
     for item in data['ingredients']:
         pdf.set_font("Helvetica", 'B', 13)
         pdf.cell(0, 8, txt=f"[+] {clean_text(item['name'])}", ln=True)
         pdf.set_font("Helvetica", '', 11)
-        pdf.multi_cell(0, 5, txt=f"Target: {clean_text(item['why'])}\n")
+        pdf.multi_cell(0, 5, txt=f"Why: {clean_text(item['why'])}\n")
         pdf.ln(2)
 
     pdf.ln(5)
 
     pdf.set_font("Helvetica", 'B', 18)
-    pdf.cell(0, 15, "BATTLE PLAN", ln=True, align='C')
+    pdf.cell(0, 15, "THE ROUTINE", ln=True, align='C')
     
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "MORNING:", ln=True)
@@ -186,15 +180,25 @@ def create_pdf(data):
     pdf.multi_cell(0, 6, txt=clean_text(data['routine_evening']))
 
     pdf.ln(15)
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.cell(0, 10, "FINAL WORD", ln=True, align='C')
-    pdf.set_font("Helvetica", 'I', 12)
-    pdf.multi_cell(0, 8, txt=clean_text(data['motivation']), align='C')
+    
+    # --- THE CAPITALISM JOKE ---
+    pdf.set_font("Helvetica", 'B', 12)
+    pdf.cell(0, 10, "HONEST NOTE:", ln=True, align='C')
+    pdf.set_font("Helvetica", '', 11)
+    
+    # The Joke Text
+    joke_text = (
+        "You can find the right cosmetics by active substance yourself through GPT or Gemini completely free of charge. "
+        "But since I am saving for a house and a car, in the best traditions of capitalism, "
+        "I offer you to buy a ready-made list for $5."
+    )
+    
+    pdf.multi_cell(0, 6, txt=joke_text, align='C')
+    pdf.ln(5)
 
-    pdf.ln(10)
     pdf.set_text_color(200, 0, 0)
     pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, ">>> DOWNLOAD SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_LINK)
+    pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_LINK)
     
     return pdf
 
@@ -207,7 +211,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 60 
+CURRENT = 70 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -225,31 +229,33 @@ if st.query_params.get("paid") == "true":
     # Input Data
     p_age = st.selectbox("Your Age", ["Under 25", "25-35", "35-45", "45+"], key="p_age")
     p_skin = st.selectbox("Skin Type", ["Oily (Shiny)", "Dry (Tight)", "Normal", "Sensitive"], key="p_skin")
-    p_enemy = st.selectbox("Main Problem", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"], key="p_enemy")
-    p_sins = st.multiselect("Bad Habits", ["Smoking", "Alcohol", "Sugar", "No Sleep", "Stress"], key="p_sins")
+    # THE MAIN FOCUS
+    p_enemy = st.selectbox("FOCUS PROBLEM (What do we fix today?)", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"], key="p_enemy")
+    p_sins = st.multiselect("Bad Habits (For the roast)", ["Smoking", "Alcohol", "Sugar", "No Sleep", "Stress"], key="p_sins")
 
     # Image Upload
-    upl = st.file_uploader("Upload Selfie (Required for Roast)", type=['jpg', 'png'])
+    upl = st.file_uploader("Upload Selfie (Required)", type=['jpg', 'png'])
     
     if st.button("GENERATE REPORT NOW"):
         if upl:
-            with st.spinner("SCANNING FACE & DATA... (This takes 10-15 seconds)"):
+            with st.spinner("ANALYZING YOUR SELECTED PROBLEM..."):
                 # CALLING THE REAL VISION AI
                 data = analyze_skin_with_vision(upl, p_age, p_skin, p_enemy, p_sins)
                 
                 if data:
                     try:
-                        pdf = create_pdf(data)
+                        # Pass p_enemy to PDF for the title
+                        pdf = create_pdf(data, p_enemy)
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD DOSSIER (PDF)", f, "Skin_Roast_Plan_Deep.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD DOSSIER (PDF)", f, "Skin_Roast_Plan_Focus.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
                         st.error(f"PDF Error: {e}")
         else:
-            st.error("Please upload a photo so I can see what we are dealing with!")
+            st.error("Upload a photo!")
 
 # FREE VERSION
 else:
