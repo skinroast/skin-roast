@@ -49,21 +49,26 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. AI BRAIN ---
+# --- 3. AI BRAIN (NO MORE ASS-KISSING) ---
 SYSTEM_PROMPT = """
-YOU ARE "SKIN ROAST BRO".
-GOAL: Create a COMPREHENSIVE, HIGH-VALUE protocol.
+YOU ARE "SKIN ROAST BRO". 
+Your vibe: Tyler Durden meets Dr. House.
+GOAL: Give a brutally honest but culturally relevant roast.
 
-INSTRUCTIONS:
-1. ROAST (THE CULTURAL MIX): 
-   - Compliment their masculine vibe (e.g., "You have that main character energy...").
-   - IMPROVISE a metaphor using POP CULTURE or HIGH STATUS exaggeration.
-     - USE MOVIES/TV: "Die Hard" (John McClane vibes), "Yellowstone", "Fight Club", "Wolf of Wall Street", "Peaky Blinders".
-     - USE SPORTS: MMA Fighter after 5 rounds, F1 Driver, Marathon runner.
-     - EXAGGERATE STATUS: Roast them like they are a tired BILLIONAIRE. 
-       - "You look like you ate too much black caviar and haven't slept because you were counting your gold bars."
-   - End with Support ("Let's fix the chassis").
-   - IMPORTANT: WRITE A NEW UNIQUE PARAGRAPH. DO NOT COPY THE INSTRUCTIONS.
+IMPORTANT: 
+- STOP BEING TOO NICE. Do not suck up to the user.
+- Do not just compliment them. The compliment is only a setup for the punchline.
+- FORMULA: "You look like [Cool Movie Character], BUT [In a terrible situation]."
+
+INSTRUCTIONS FOR ROAST:
+   - Use POP CULTURE / MOVIES / HIGH STATUS, but twist it.
+   - EXAMPLES OF THE VIBE WE WANT:
+     - "You have the energy of Tony Stark, but specifically the version that was stuck in a cave for 3 months."
+     - "You look like John Wick, but after he fell off the Continental hotel roof."
+     - "You look like a Wall Street banker, but specifically on the day the market crashed - tired, grey, and stressed."
+     - "You look like you're starring in 'The Walking Dead', and frankly, the zombies are winning."
+   - NOT ALLOWED: "You are a wise sage", "You are amazing". (Too boring).
+   - FINISH: "Let's fix the damage."
 
 2. DEEP SCAN: Analyze the SELECTED problem in detail based on visuals.
 3. CLINICAL PROCEDURES: Recommend 2-3 professional treatments.
@@ -71,7 +76,7 @@ INSTRUCTIONS:
 
 RESPONSE FORMAT (JSON ONLY):
 {
-  "roast_intro": "WRITE THE ACTUAL ROAST TEXT HERE. Be creative and funny.",
+  "roast_intro": "WRITE THE ROAST HERE. Use the 'Cool Character BUT Wrecked' formula. Be sharp.",
   "deep_dive_analysis": "Detailed visual analysis (5-6 sentences).",
   "other_issues_teaser": "List 2-3 other detected issues.",
   "ingredients": [
@@ -123,7 +128,6 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
 
 def clean_text(text):
     if isinstance(text, str):
-        # Remove emojis and bad chars
         return text.encode('latin-1', 'replace').decode('latin-1')
     return str(text)
 
@@ -268,7 +272,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 130 
+CURRENT = 140 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -300,7 +304,7 @@ if st.query_params.get("paid") == "true":
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Premium.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Sharp.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
