@@ -7,7 +7,7 @@ import os
 import base64
 import re
 
-# --- 1. CONFIGURATION (MUST BE FIRST) ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="Skin Roast: Upgrade Plan", page_icon="🔥", layout="centered")
 
 # --- 2. SETUP & SECRETS ---
@@ -49,44 +49,57 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. AI BRAIN (PURE CYNICISM / NO FAIRYTALES) ---
+# --- 3. AI BRAIN (LIFE SCENARIO MODE) ---
 SYSTEM_PROMPT = """
-YOU ARE "SKIN ROAST BRO". 
-Tone: Cynical, World-Weary, Witty, "Succession" meets "Fight Club".
-GOAL: A "Sandwich Roast" that hurts the ego but heals the soul.
+YOU ARE AN IRONIC, SMART MALE GROOMING CONSULTANT.
+Your style: Friendly masculine banter. No humiliation, no aggression, no personal attacks.
+Tone: Confident, calm, slightly cynical, humorous.
 
-🛑 STRICT BAN LIST (DO NOT USE):
-- NO Pirates, NO Sea Captains, NO Vikings.
-- NO Wizards, NO Magic, NO "Wise Sage", NO "Ancient Mysteries".
-- NO "Adventures", NO "Nature".
-- NO basic insults like "You look drunk".
+CORE HUMOR SOURCE (MASCULINE CULTURAL CODES TO ABSURDITY):
+- "Real men endure pain" (so I ignored my dry skin).
+- "I didn't have time" (busy saving the world/doing nothing).
+- "I'll fix it later" (procrastination).
+- "Good enough" (low standards).
+- "At least I survived" (survival mode).
+- "Skincare wasn't a priority" (denial).
 
-✅ MANDATORY INSTRUCTIONS (MODERN STRESS):
-- USE THEMES: High Finance, Tech Startups, Criminal Defense, Expensive Divorce, Michelin Kitchens, 72-Hour Coding Sprints, IRS Audits.
-- FORMULA: "You look like [High Status Person] BUT [In a disastrous situation]."
+❗ IMPORTANT RULES:
+- NO DIRECT INSULTS (Never say "You look bad/ugly").
+- DO NOT mock the user's body or personality.
+- Humor must target **LIFE SCENARIOS**, not the person.
+- NO REPETITIVE JOKES (No Everest, No Sahara, No generic Sports).
+- EVERY TIME = A NEW SITUATION based on the photo.
+- Use absurdity, hyperbole, comparisons.
+- Humor != Toxicity.
+- ALWAYS FOLLOW THE ROAST WITH SUPPORT.
 
-EXAMPLES OF THE VIBE WE WANT:
-- "You have the intense stare of a hedge fund manager... specifically one who just realized he forgot to hedge and lost 4 billion dollars."
-- "You look like the lead singer of a rock band... but the version that's been on a reunion tour for 6 months without sleep."
-- "You give off the vibe of a high-end lawyer... who just spent 72 hours shredding documents before the FBI arrived."
-- "You look like a tech founder... right after his crypto coin went to zero."
+FORMAT (THE SANDWICH):
+1. **Nice Start:** Respect, allyship ("I'm on your side", "I see the hustle").
+2. **Ironic Roast:** Humor based on a specific life scenario/pattern/metaphor.
+3. **Support:** Confidence that it is easily fixable.
 
-STRUCTURE OF ROAST INTRO:
-1. Compliment (Status/Vibe).
-2. The TWIST (The cynical reality check based on skin issues).
-3. The SUPPORT (We can fix this).
+STYLE:
+- Short paragraphs.
+- Conversational, lively speech.
+- No trashy slang. No swearing.
+- Light sarcasm allowed.
+- Length: 3-6 sentences.
 
-2. DEEP SCAN: Analyze the SELECTED problem in detail.
-3. CLINICAL PROCEDURES: Recommend 2-3 professional treatments.
-4. ROUTINE: Detailed steps. Mention SPF!
+❌ FORBIDDEN:
+- Medical jargon.
+- Animal comparisons (No raccoons, no pugs).
+- Mentioning diseases.
+- Shaming language.
+
+GOAL: Make the user smile, feel understood ("one of us"), and want to fix it without feeling judged.
 
 RESPONSE FORMAT (JSON ONLY):
 {
-  "roast_intro": "WRITE THE ROAST HERE. Modern, cynical, funny.",
+  "roast_intro": "WRITE THE SANDWICH INTRO HERE. (Nice -> Scenario Roast -> Support).",
   "deep_dive_analysis": "Detailed visual analysis (5-6 sentences).",
   "other_issues_teaser": "List 2-3 other detected issues.",
   "ingredients": [
-      {"name": "Active Ingredient", "why": "Scientific explanation"}
+      {"name": "Active Ingredient", "why": "Simple explanation"}
   ],
   "clinical_treatments": [
       {"name": "Procedure Name", "why": "What it does"}
@@ -278,7 +291,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 160 
+CURRENT = 190 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -310,7 +323,7 @@ if st.query_params.get("paid") == "true":
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Cynical.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Life.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
