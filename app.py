@@ -5,14 +5,15 @@ import tempfile
 import json
 import os
 import base64
+import re
 
 # --- 1. SETUP & SECRETS ---
 if "OPENAI_API_KEY" in st.secrets:
     openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # LINKS
-LEMON_SQUEEZY_LINK = "https://skin-roast.lemonsqueezy.com/buy" 
-UPSELL_LINK = "https://skin-roast.lemonsqueezy.com/buy"
+LEMON_SQUEEZY_LINK = "[https://skin-roast.lemonsqueezy.com/buy](https://skin-roast.lemonsqueezy.com/buy)" 
+UPSELL_LINK = "[https://skin-roast.lemonsqueezy.com/buy](https://skin-roast.lemonsqueezy.com/buy)"
 
 st.set_page_config(page_title="Skin Roast: Upgrade Plan", page_icon="🔥", layout="centered")
 
@@ -95,12 +96,21 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
             ],
             max_tokens=2000
         )
-        return json.loads(response.choices[0].message.content)
+        
+        # --- NEW SAFETY CHECK ---
+        content = response.choices[0].message.content
+        if not content:
+            st.error("AI Safety Filter blocked this image. Please try a different photo (less medical, more selfie).")
+            return None
+            
+        return json.loads(content)
+
     except Exception as e:
         st.error(f"AI Error: {e}")
         return None
 
 def clean_text(text):
+    # Brutal cleaning of any non-latin characters
     if isinstance(text, str):
         return text.encode('latin-1', 'replace').decode('latin-1')
     return str(text)
