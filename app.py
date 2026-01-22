@@ -5,17 +5,17 @@ import tempfile
 import json
 import os
 
-# --- 1. НАСТРОЙКИ ---
+# --- 1. SETUP & SECRETS ---
 if "OPENAI_API_KEY" in st.secrets:
     openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# ССЫЛКИ НА ОПЛАТУ (ЗАМЕНИШЬ ПОТОМ НА СВОИ!)
+# LINKS (REPLACE WITH YOURS LATER)
 LEMON_SQUEEZY_LINK = "https://skin-roast.lemonsqueezy.com/buy" 
 UPSELL_LINK = "https://skin-roast.lemonsqueezy.com/buy"
 
 st.set_page_config(page_title="Skin Roast: Upgrade Plan", page_icon="🔥", layout="centered")
 
-# Дизайн: Убираем лишнее, делаем кнопки красными
+# CSS HACK: Hide Streamlit branding & Style Buttons
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -32,33 +32,35 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. МОЗГИ AI (БРО-ПРОМТ) ---
+# --- 2. AI BRAIN (BRO PROMPT - ENGLISH) ---
 SYSTEM_PROMPT = """
-ТЫ — "SKIN ROAST BRO". Ты лучший друг, наставник.
-Твоя цель — помочь другу стать красавчиком, используя метод: [Признание] -> [Сатира над ошибками] -> [Мотивация].
-СТИЛЬ:
-- Обращайся на "Ты", "Бро", "Чемпион".
-- Метафоры: Jaguar V12, Lake Oswego, NBA, Уолл-стрит.
-- Не оскорбляй личность. Критикуй лень и прыщи.
+YOU ARE "SKIN ROAST BRO". You are the user's best friend and mentor.
+Your goal is to help your bro become handsome using the "Sandwich Method":
+[Recognition of Potential] -> [Roast of Bad Habits] -> [Motivation].
 
-ФОРМАТ ОТВЕТА (JSON):
+TONE OF VOICE:
+- Address user as "Bro", "Champ", "Man".
+- Metaphors: Jaguar V12, Lake Oswego, NBA, Wall Street, Survival Mode.
+- NO insults to personality. Roast the LAZINESS and the BAD SKIN HABITS only.
+
+RESPONSE FORMAT (JSON ONLY):
 {
-  "roast": "Текст прожарки (3-4 предложения)",
-  "problems_list": ["Проблема 1", "Проблема 2"],
+  "roast": "Roast text (3-4 punchy sentences)",
+  "problems_list": ["Problem 1", "Problem 2"],
   "ingredients": [
-      {"name": "Название", "why": "Зачем нужно"}
+      {"name": "Ingredient Name", "why": "Why it works (1 sentence)"}
   ],
-  "routine_morning": "Шаги на утро",
-  "routine_evening": "Шаги на вечер",
-  "motivation": "Финал"
+  "routine_morning": "Morning steps bullet points",
+  "routine_evening": "Evening steps bullet points",
+  "motivation": "Final motivational quote"
 }
 """
 
 def analyze_skin(age, skin_type, problem, habits):
-    """Стучится в OpenAI"""
+    """Call OpenAI"""
     if not openai.api_key:
         return None  
-    user_prompt = f"Данные: Возраст {age}, Кожа {skin_type}, Проблема {problem}, Грехи {habits}."
+    user_prompt = f"Data: Age {age}, Skin {skin_type}, Problem {problem}, Sins {habits}."
     try:
         response = openai.chat.completions.create(
             model="gpt-4o",
@@ -70,105 +72,119 @@ def analyze_skin(age, skin_type, problem, habits):
         return None
 
 def create_pdf(data):
-    """Рисует PDF"""
+    """Generate English PDF"""
     pdf = FPDF()
-    # Пробуем русский шрифт, иначе Arial
-    try:
-        pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-        pdf.set_font('DejaVu', '', 12)
-        font_name = 'DejaVu'
-    except:
-        font_name = 'Arial'
-    
     pdf.add_page()
-    pdf.set_font(font_name, '', 24)
-    pdf.cell(0, 20, "YOUR UPGRADE PLAN", ln=True, align='C')
-    pdf.set_font(font_name, '', 12)
-    pdf.multi_cell(0, 10, txt=f"\n{data['roast']}\n")
     
-    pdf.ln(5)
-    pdf.set_font(font_name, '', 14)
-    pdf.cell(0, 10, "ТВОИ ПРОБЛЕМЫ:", ln=True)
-    pdf.set_font(font_name, '', 12)
+    # Fonts are standard in English (Arial/Helvetica)
+    pdf.set_font("Helvetica", 'B', 28)
+    pdf.cell(0, 20, "YOUR UPGRADE PLAN", ln=True, align='C')
+    pdf.ln(10)
+    
+    pdf.set_font("Helvetica", '', 14)
+    pdf.multi_cell(0, 10, txt=f"VERDICT: {data['roast']}")
+    pdf.ln(10)
+    
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.cell(0, 10, "IDENTIFIED ISSUES:", ln=True)
+    pdf.set_font("Helvetica", '', 12)
     for prob in data['problems_list']:
         pdf.cell(0, 8, txt=f"- {prob}", ln=True)
 
     pdf.add_page()
-    pdf.set_font(font_name, '', 18)
-    pdf.cell(0, 15, "YOUR WEAPONS (АРСЕНАЛ)", ln=True, align='C')
-    pdf.set_font(font_name, '', 12)
+    pdf.set_font("Helvetica", 'B', 22)
+    pdf.cell(0, 20, "YOUR WEAPONS (ARSENAL)", ln=True, align='C')
+    pdf.ln(10)
+    
     for item in data['ingredients']:
-        pdf.set_font(font_name, '', 14)
+        pdf.set_font("Helvetica", 'B', 16)
         pdf.cell(0, 10, txt=f"🧪 {item['name']}", ln=True)
-        pdf.set_font(font_name, '', 11)
-        pdf.multi_cell(0, 6, txt=f"Зачем: {item['why']}\n")
+        pdf.set_font("Helvetica", '', 12)
+        pdf.multi_cell(0, 6, txt=f"Why: {item['why']}\n")
+        pdf.ln(5)
 
     pdf.add_page()
-    pdf.set_font(font_name, '', 18)
-    pdf.cell(0, 15, "BATTLE PLAN (РЕЖИМ)", ln=True, align='C')
-    pdf.set_font(font_name, '', 14)
-    pdf.cell(0, 10, "☀️ УТРО:", ln=True)
-    pdf.set_font(font_name, '', 11)
+    pdf.set_font("Helvetica", 'B', 22)
+    pdf.cell(0, 20, "BATTLE PLAN (ROUTINE)", ln=True, align='C')
+    
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.cell(0, 15, "☀️ MORNING:", ln=True)
+    pdf.set_font("Helvetica", '', 12)
     pdf.multi_cell(0, 6, txt=data['routine_morning'])
-    pdf.ln(5)
-    pdf.cell(0, 10, "🌙 ВЕЧЕР:", ln=True)
+    pdf.ln(10)
+    
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.cell(0, 15, "🌙 EVENING:", ln=True)
     pdf.multi_cell(0, 6, txt=data['routine_evening'])
 
     pdf.add_page()
-    pdf.set_font(font_name, '', 20)
+    pdf.set_font("Helvetica", 'B', 26)
     pdf.cell(0, 30, "DON'T BE STUPID", ln=True, align='C')
-    pdf.set_font(font_name, '', 12)
-    pdf.multi_cell(0, 8, txt="Ты знаешь теорию. Но если купишь плохие средства - сделаешь хуже.\nЯ собрал список конкретных банок, которые работают.\n\nЖми ссылку ниже, чтобы забрать готовый список.", align='C')
-    pdf.ln(10)
+    pdf.set_font("Helvetica", '', 14)
+    pdf.multi_cell(0, 10, txt="You know the theory. But if you buy trash products, you'll make it worse.\n\nI curated a list of products that actually work.\n\nClick below to get the shopping list.", align='C')
+    pdf.ln(20)
+    
     pdf.set_text_color(0, 0, 255)
-    pdf.cell(0, 10, ">>> КУПИТЬ СПИСОК СРЕДСТВ ($5) <<<", ln=True, align='C', link=UPSELL_LINK)
+    pdf.set_font("Helvetica", 'U', 14)
+    pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_LINK)
     return pdf
 
-# --- 3. ИНТЕРФЕЙС ---
-st.warning("""
-⚠️ **ЧЕСТНОЕ ПРЕДУПРЕЖДЕНИЕ:**
-Дизайна нет, потому что я экономлю на дизайнерах.
-У меня есть цель: **Дом на Lake Oswego ($6M) + Вишневый Jaguar E-Type V12 ($150k)**.
-Каждые ваши $10 приближают меня к мечте.
+# --- 3. UI INTERFACE ---
 
-Я не обещаю, что этот отчет купит тебе такой дом.
-Я обещаю другое: **когда ты добьешься успеха, ты будешь выглядеть достойно**.
-Приведи лицо в порядок, чтобы не было стыдно опустить крышу кабриолета.
+# THE LEGEND (ENGLISH)
+st.warning("""
+⚠️ **HONEST WARNING:**
+There is no fancy design here because I'm saving money.
+I have a goal: **Lake Oswego House ($6M) + Cherry Jaguar E-Type V12 ($150k)**.
+Every $10 you spend gets me 0.000001% closer to the dream.
+
+**REAL TALK:**
+I don't promise this report will buy you that house. That's on you.
+I promise this: **when you make it big, you will look the part.**
+Fix your face now, so you don't feel ashamed to drop the roof of your convertible later.
 """)
 
+# GOAL TRACKER
 GOAL = 6150000 
 CURRENT = 40 
 st.progress(CURRENT / GOAL)
-st.caption(f"Собрано: ${CURRENT} из ${GOAL:,}. Осталось всего ничего.")
+st.caption(f"Raised: ${CURRENT} of ${GOAL:,}. Long way to go.")
 st.divider()
 
 st.title("SKIN ROAST 🔥")
+st.caption("No-BS Personal Grooming Plan.")
 
 if st.query_params.get("paid") == "true":
     st.balloons()
-    st.success("Добро пожаловать в клуб.")
+    st.success("Welcome to the club.")
     with st.form("gen"):
-        upl = st.file_uploader("Загрузи фото для анализа", type=['jpg', 'png'])
-        if st.form_submit_button("СГЕНЕРИРОВАТЬ ПЛАН"):
+        upl = st.file_uploader("Upload photo for analysis", type=['jpg', 'png'])
+        st.caption("Click below to let AI write your strategy.")
+        if st.form_submit_button("GENERATE MY PLAN"):
             if upl:
-                with st.spinner("AI пишет стратегию..."):
-                    # Здесь заглушка данных для теста (в версии 2.0 сделаем умнее)
-                    data = analyze_skin("30", "Жирная", "Прыщи", "Нет сна")
+                with st.spinner("Analyzing..."):
+                    # Mock data for MVP test
+                    data = analyze_skin("30", "Oily", "Acne", "No Sleep")
                     if data:
                         pdf = create_pdf(data)
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ СКАЧАТЬ PDF", f, "Skin_Roast_Plan.pdf", "application/pdf")
-                        st.warning("Не тупи, купи готовый список средств ниже.")
-                        st.link_button("КУПИТЬ СПИСОК ($5)", UPSELL_LINK)
+                                st.download_button("⬇️ DOWNLOAD PLAN (PDF)", f, "Skin_Roast_Plan.pdf", "application/pdf")
+                        st.warning("Don't guess. Get the product list below.")
+                        st.link_button("GET SHOPPING LIST ($5)", UPSELL_LINK)
 else:
     with st.form("quiz"):
-        st.selectbox("Возраст", ["До 25", "25-35", "35+"])
-        st.selectbox("Кожа", ["Жирная", "Сухая", "Нормальная"])
-        st.selectbox("Проблема", ["Прыщи", "Морщины", "Мешки"])
-        st.file_uploader("Фото", type=['jpg'])
-        if st.form_submit_button("СКАНИРОВАТЬ"):
-            st.success("Данные приняты.")
-            st.info("Найдено 3 критических ошибки.")
-            st.link_button("👉 ПОЛУЧИТЬ ПЛАН ($10)", LEMON_SQUEEZY_LINK)
+        st.write("#### 1. The Dossier:")
+        st.selectbox("Age Group", ["Under 25", "25-35", "35-45", "45+"])
+        st.selectbox("Skin Type", ["Oily (Shiny)", "Dry (Tight)", "Normal", "Sensitive"])
+        st.selectbox("Main Enemy", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"])
+        st.multiselect("Sins", ["Smoking/Vaping", "Alcohol", "Sugar/Fastfood", "No Sleep", "Stress"])
+        
+        st.write("#### 2. Visual Evidence:")
+        st.file_uploader("Upload Selfie", type=['jpg', 'png'])
+        
+        if st.form_submit_button("SCAN FACE"):
+            st.success("Data received.")
+            st.info("🔥 Found 3 critical mistakes in your routine.")
+            st.link_button("👉 GET THE PLAN ($10)", LEMON_SQUEEZY_LINK)
