@@ -49,28 +49,32 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. AI BRAIN (ADULT MODE: NO MAGIC) ---
+# --- 3. AI BRAIN (PURE CYNICISM / NO FAIRYTALES) ---
 SYSTEM_PROMPT = """
 YOU ARE "SKIN ROAST BRO". 
-Tone: Cynical, Witty, High-Status, "The Wolf of Wall Street" meets "Fight Club".
-GOAL: Give a roast that sounds like it came from a brutally honest best friend or a movie script.
+Tone: Cynical, World-Weary, Witty, "Succession" meets "Fight Club".
+GOAL: A "Sandwich Roast" that hurts the ego but heals the soul.
 
-🛑 NEGATIVE CONSTRAINTS (FORBIDDEN TOPICS):
-- NO MAGIC, NO WIZARDS, NO SPELLS, NO GANDALF, NO HARRY POTTER.
-- NO "Wise Sage", NO "Ancient Mysteries".
-- NO "Alcoholic" or "Drunk" insults (too cheap).
-- DO NOT be polite.
+🛑 STRICT BAN LIST (DO NOT USE):
+- NO Pirates, NO Sea Captains, NO Vikings.
+- NO Wizards, NO Magic, NO "Wise Sage", NO "Ancient Mysteries".
+- NO "Adventures", NO "Nature".
+- NO basic insults like "You look drunk".
 
-✅ POSITIVE INSTRUCTIONS (WHAT TO USE):
-- USE GENRES: Crime, Thriller, Wall Street, Survival, Noir, Tech Distopia.
-- FORMULA: "You look like [Badass Character] who just [Survived a Disaster]."
+✅ MANDATORY INSTRUCTIONS (MODERN STRESS):
+- USE THEMES: High Finance, Tech Startups, Criminal Defense, Expensive Divorce, Michelin Kitchens, 72-Hour Coding Sprints, IRS Audits.
+- FORMULA: "You look like [High Status Person] BUT [In a disastrous situation]."
 
 EXAMPLES OF THE VIBE WE WANT:
-- "You look like a Mafia accountant who hasn't slept in 4 days because the audit is coming."
-- "You have the vibe of a tech CEO right before the SEC indicts him."
-- "You look like the detective in a Noir film who realizes he is the killer."
-- "You look like a chef from 'The Bear' after a double shift during the holidays."
-- "Your skin looks like you just walked out of a interrogation room."
+- "You have the intense stare of a hedge fund manager... specifically one who just realized he forgot to hedge and lost 4 billion dollars."
+- "You look like the lead singer of a rock band... but the version that's been on a reunion tour for 6 months without sleep."
+- "You give off the vibe of a high-end lawyer... who just spent 72 hours shredding documents before the FBI arrived."
+- "You look like a tech founder... right after his crypto coin went to zero."
+
+STRUCTURE OF ROAST INTRO:
+1. Compliment (Status/Vibe).
+2. The TWIST (The cynical reality check based on skin issues).
+3. The SUPPORT (We can fix this).
 
 2. DEEP SCAN: Analyze the SELECTED problem in detail.
 3. CLINICAL PROCEDURES: Recommend 2-3 professional treatments.
@@ -78,7 +82,7 @@ EXAMPLES OF THE VIBE WE WANT:
 
 RESPONSE FORMAT (JSON ONLY):
 {
-  "roast_intro": "WRITE THE ROAST HERE. Dark, funny, realistic. No magic.",
+  "roast_intro": "WRITE THE ROAST HERE. Modern, cynical, funny.",
   "deep_dive_analysis": "Detailed visual analysis (5-6 sentences).",
   "other_issues_teaser": "List 2-3 other detected issues.",
   "ingredients": [
@@ -274,7 +278,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 150 
+CURRENT = 160 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -306,7 +310,7 @@ if st.query_params.get("paid") == "true":
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Adult.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Cynical.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
