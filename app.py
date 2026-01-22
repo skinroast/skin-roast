@@ -49,8 +49,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HARDCODED MEDICAL LOGIC (STABILITY) ---
-# This ensures recommendations are consistent and medically accurate based on your files.
+# --- 3. HARDCODED MEDICAL LOGIC ---
 TREATMENT_LOGIC = {
     "Acne / Pimples": {
         "ingredients": "Salicylic Acid (BHA), Zinc, Niacinamide",
@@ -78,34 +77,31 @@ TREATMENT_LOGIC = {
     }
 }
 
-# --- 4. AI BRAIN (SHARPER LIFE SCENARIO) ---
+# --- 4. AI BRAIN (OBSERVATIONAL COMEDY MODE) ---
 SYSTEM_PROMPT = """
-YOU ARE AN IRONIC, SHARP MALE GROOMING CONSULTANT.
-Tone: "The brutally honest best friend." Not toxic, but NOT soft.
-You give a "Reality Check".
+YOU ARE A STAND-UP COMEDIAN & DERMATOLOGIST.
+Tone: Sharp, Observational, "No Filter". 
+Think: Bill Burr or Ricky Gervais analyzing a face.
 
-CORE HUMOR SOURCE (LIFE SCENARIOS):
-- "Real men endure pain" (ignoring dry skin).
-- "I didn't have time" (busy procrastination).
-- "I'll fix it later" (classic denial).
-- "It's just bad lighting" (no, it's bad skin).
+🚫 BANNED:
+- NO "Sage", "Wisdom", "Ancient", "Time travel", "Heroes". 
+- NO POETRY.
+- NO DIRECT INSULTS ("Ugly", "Fat").
 
-❗ IMPORTANT RULES:
-1. SHARPNESS: Don't just support. STING a little first. Point out the neglect specifically.
-2. NO REPETITION: Do not use the same joke twice.
-3. LOGIC: You MUST recommend the specific treatments provided in the context below. Do not hallucinate random procedures.
+✅ REQUIRED VIBE (SPECIFIC & MODERN):
+- Use very specific modern scenarios to roast the "Vibe".
+- Example: "You look like you just tried to explain NFT's to your dad for 6 hours."
+- Example: "You look like a tech CEO 10 minutes before the SEC raid."
+- Example: "You have the skin of a man who washes his face with 3-in-1 shampoo and pure aggression."
+- Example: "You look like you've been surviving on Red Bull and anxiety since 2019."
 
-FORMAT (THE SANDWICH):
-1. **The Hook:** Acknowledge the user, but immediately point out the flaw.
-2. **The Roast (Scenario):** "You look like a [Role] who just [Disaster]."
-   - Example: "You look like a startup founder who just realized his equity is worth zero."
-   - Example: "You look like a dad who hasn't slept since 2019."
-3. **The Solution:** "But we can fix it."
+LOGIC RULE:
+- You MUST use the medical advice provided below.
 
 RESPONSE FORMAT (JSON ONLY):
 {
-  "roast_intro": "WRITE THE SHARP SCENARIO ROAST HERE. (3-4 sentences).",
-  "deep_dive_analysis": "Detailed visual analysis (5-6 sentences).",
+  "roast_intro": "WRITE THE ROAST HERE. (3-4 sentences). Sharp and funny.",
+  "deep_dive_analysis": "Detailed visual analysis (5-6 sentences). Clinical but witty.",
   "other_issues_teaser": "List 2-3 other detected issues.",
   "ingredients": [
       {"name": "Ingredient from Logic", "why": "Explanation"}
@@ -113,8 +109,14 @@ RESPONSE FORMAT (JSON ONLY):
   "clinical_treatments": [
       {"name": "Procedure from Logic", "why": "Explanation"}
   ],
-  "routine_morning": "Detailed AM steps.",
-  "routine_evening": "Detailed PM steps."
+  "routine_morning": [
+      "Step 1: Do this...",
+      "Step 2: Do that..."
+  ],
+  "routine_evening": [
+      "Step 1: Do this...",
+      "Step 2: Do that..."
+  ]
 }
 """
 
@@ -128,17 +130,16 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
     base64_image = encode_image(image_file)
     habits_str = ", ".join(habits) if habits else "None"
     
-    # GET FIXED LOGIC
-    logic = TREATMENT_LOGIC.get(problem, TREATMENT_LOGIC["Acne / Pimples"]) # Default to Acne if fails
+    logic = TREATMENT_LOGIC.get(problem, TREATMENT_LOGIC["Acne / Pimples"]) 
     
     user_text = f"""
     User Data: Age {age}, Skin Type {skin_type}. 
     FOCUS PROBLEM: {problem}. 
     Habits: {habits_str}.
     
-    MANDATORY MEDICAL LOGIC (DO NOT CHANGE THESE RECOMMENDATIONS):
-    - Recommend Ingredients: {logic['ingredients']} (Why: {logic['why_ing']})
-    - Recommend Procedures: {logic['procedures']} (Why: {logic['why_proc']})
+    MANDATORY MEDICAL LOGIC:
+    - Ingredients: {logic['ingredients']} (Why: {logic['why_ing']})
+    - Procedures: {logic['procedures']} (Why: {logic['why_proc']})
     """
 
     try:
@@ -154,14 +155,9 @@ def analyze_skin_with_vision(image_file, age, skin_type, problem, habits):
             ],
             max_tokens=2000
         )
-        
         content = response.choices[0].message.content
-        if not content:
-            st.error("AI Safety Filter blocked this image. Please use a regular selfie.")
-            return None
-            
+        if not content: return None
         return json.loads(content)
-
     except Exception as e:
         st.error(f"AI Error: {e}")
         return None
@@ -247,26 +243,40 @@ def create_pdf(data, problem_name):
         "1. Active ingredients (Retinol, Acids) are powerful. They can burn if misused.\n"
         "2. ALWAYS use SPF 30+ if you use Retinol or Acids. No excuses.\n"
         "3. PATCH TEST: Apply a small amount on your neck before putting it on your face.\n"
-        "4. Start slowly: Use Retinol 2 times a week, then increase.\n"
-        "5. Check for allergies and read the instructions on the bottle."
+        "4. Start slowly: Use Retinol 2 times a week, then increase."
     )
     pdf.multi_cell(0, 6, txt=safety_text)
     pdf.ln(10)
 
-    # ROUTINE
+    # ROUTINE (LIST FORMAT)
     pdf.set_font("Helvetica", 'B', 18)
     pdf.cell(0, 15, "DAILY OPERATIONS", ln=True, align='C')
     
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "MORNING:", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['routine_morning']))
+    
+    # Loop for Morning List
+    if isinstance(data.get('routine_morning'), list):
+        for idx, step in enumerate(data['routine_morning'], 1):
+            pdf.multi_cell(0, 6, txt=f"{idx}. {clean_text(step)}")
+            pdf.ln(2)
+    else:
+        pdf.multi_cell(0, 6, txt=clean_text(str(data.get('routine_morning'))))
+    
     pdf.ln(5)
     
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "EVENING:", ln=True)
     pdf.set_font("Helvetica", '', 11)
-    pdf.multi_cell(0, 6, txt=clean_text(data['routine_evening']))
+    
+    # Loop for Evening List
+    if isinstance(data.get('routine_evening'), list):
+        for idx, step in enumerate(data['routine_evening'], 1):
+            pdf.multi_cell(0, 6, txt=f"{idx}. {clean_text(step)}")
+            pdf.ln(2)
+    else:
+        pdf.multi_cell(0, 6, txt=clean_text(str(data.get('routine_evening'))))
 
     pdf.ln(10)
     
@@ -296,7 +306,7 @@ def create_pdf(data, problem_name):
     disclaimer = (
         "MEDICAL DISCLAIMER: This report is generated by AI for informational purposes only. "
         "It does not constitute medical advice, diagnosis, or treatment. "
-        "Always seek the advice of a qualified physician or dermatologist. "
+        "Always seek the advice of a qualified physician. "
         "The user assumes full responsibility for the use of any recommended products."
     )
     pdf.multi_cell(0, 4, txt=disclaimer, align='C')
@@ -312,7 +322,7 @@ In return, I give you the truth about your face. Fair trade.
 """)
 
 GOAL = 6150000 
-CURRENT = 200 
+CURRENT = 220 
 st.progress(CURRENT / GOAL)
 st.caption(f"Raised: ${CURRENT} of ${GOAL:,}.")
 st.divider()
@@ -329,7 +339,6 @@ if st.query_params.get("paid") == "true":
     
     p_age = st.selectbox("Your Age", ["Under 25", "25-35", "35-45", "45+"], key="p_age")
     p_skin = st.selectbox("Skin Type", ["Oily (Shiny)", "Dry (Tight)", "Normal", "Sensitive"], key="p_skin")
-    # THE MAIN FOCUS - This triggers the Logic Matrix
     p_enemy = st.selectbox("FOCUS PROBLEM", ["Acne / Pimples", "Wrinkles / Aging", "Eye Bags / Tired", "Redness"], key="p_enemy")
     p_sins = st.multiselect("Bad Habits", ["Smoking", "Alcohol", "Sugar", "No Sleep", "Stress"], key="p_sins")
 
@@ -345,7 +354,7 @@ if st.query_params.get("paid") == "true":
                         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                             pdf.output(tmp.name)
                             with open(tmp.name, "rb") as f:
-                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Sharp.pdf", "application/pdf")
+                                st.download_button("⬇️ DOWNLOAD FULL DOSSIER (PDF)", f, "Skin_Roast_Formatted.pdf", "application/pdf")
                         st.success("REPORT GENERATED.")
                         st.link_button("GET THE TOOLS ($5)", UPSELL_LINK)
                     except Exception as e:
