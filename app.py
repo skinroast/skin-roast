@@ -172,10 +172,11 @@ def create_pdf(data, problem_name):
     # --- PAGE 3 ---
     pdf.add_page()
     
-    # --- SAFETY WARNING (NEW!) ---
+    # --- SAFETY WARNING (FIXED: NO EMOJI) ---
     pdf.set_fill_color(255, 200, 200) # Light Red Background
     pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, "⚠️ SAFETY PROTOCOL (READ THIS):", ln=True, fill=True)
+    # REPLACED EMOJI WITH [!] TO FIX ERROR
+    pdf.cell(0, 10, "[!] SAFETY PROTOCOL (READ THIS):", ln=True, fill=True)
     pdf.set_font("Helvetica", '', 11)
     safety_text = (
         "1. Active ingredients (Retinol, Acids) are powerful. They can burn if misused.\n"
@@ -224,7 +225,7 @@ def create_pdf(data, problem_name):
     
     pdf.ln(15)
     
-    # --- MEDICAL DISCLAIMER (NEW!) ---
+    # --- MEDICAL DISCLAIMER ---
     pdf.set_text_color(100, 100, 100) # Grey
     pdf.set_font("Helvetica", 'I', 8)
     disclaimer = (
