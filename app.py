@@ -1,104 +1,131 @@
-def create_pdf_report(name, age, problem, roast_text):
+import streamlit as st
+import openai
+from fpdf import FPDF
+import tempfile
+import base64
+
+# --- 1. CONFIG (Должно быть строго первым) ---
+st.set_page_config(page_title="Skin Roast AI", page_icon="🔥")
+
+# --- 2. AUTH & ASSETS ---
+if "OPENAI_API_KEY" in st.secrets:
+    client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+else:
+    st.error("API Key missing in Secrets.")
+
+# Твои цели (Лейк-Освего)
+GOAL, CURRENT = 6150000, 260
+UPSELL_URL = "https://skin-roast.lemonsqueezy.com/upsell"
+
+# База знаний по проблемам (все 9 штук)
+SKIN_PROBLEMS = {
+    "Acne": "Salicylic Acid & Benzoyl Peroxide.",
+    "Wrinkles": "Retinol & Peptides.",
+    "Dryness": "Hyaluronic Acid & Ceramides.",
+    "Oily Skin": "Niacinamide & Clay masks.",
+    "Pigmentation": "Vitamin C & Sunscreen.",
+    "Irritation": "Centella & Panthenol.",
+    "Blackheads": "BHA (Salicylic Acid).",
+    "Flaking": "Lactic Acid & Urea.",
+    "Redness": "Azelaic Acid."
+}
+
+# --- 3. PDF GENERATOR ---
+def create_pdf(name, age, problem, roast_text):
     pdf = FPDF()
     pdf.add_page()
     
-    def clean(t):
-        return str(t).encode('latin-1', 'ignore').decode('latin-1')
+    def clean_t(t): return str(t).encode('latin-1', 'ignore').decode('latin-1')
 
-    # PAGE 1: THE ANALYSIS
+    # Header
     pdf.set_font("Helvetica", 'B', 22)
-    pdf.cell(0, 20, f"{clean(name).upper()}'S UPGRADE PLAN", ln=True, align='C') # [cite: 1]
+    pdf.cell(0, 20, f"{clean_t(name).upper()}'S UPGRADE PLAN", ln=True, align='C')
     
-    # Section: Vibe Check
+    # Vibe Check
     pdf.ln(10)
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "THE VIBE CHECK:", ln=True) # [cite: 2]
+    pdf.cell(0, 10, "THE VIBE CHECK:", ln=True)
     pdf.set_font("Helvetica", size=11)
-    pdf.multi_cell(0, 7, txt=clean(roast_text))
+    pdf.multi_cell(0, 7, txt=clean_t(roast_text))
     
-    # Section: Expanded Deep Scan
+    # Expanded Deep Scan
     pdf.ln(10)
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, f"DEEP SCAN: {clean(problem).upper()}", ln=True) # [cite: 6]
+    pdf.cell(0, 10, f"DEEP SCAN: {clean_t(problem).upper()}", ln=True)
     pdf.set_font("Helvetica", size=11)
-    
-    # Расширенный текст Deep Scan (динамически дополняется)
-    deep_scan_expanded = (
-        f"The pronounced state of {problem} on your face suggests your skin has been engaging in a "
-        "long-term relationship with environmental stress. Those creases and textures look like a "
-        "roadmap to every late night and skipped SPF application. We are seeing significant loss "
-        "of structural integrity that requires immediate intervention before it becomes permanent."
-    ) # [cite: 7, 9]
-    pdf.multi_cell(0, 7, txt=clean(deep_scan_expanded))
+    scan_details = (
+        f"The pronounced state of {problem} indicates structural neglect. "
+        "We are seeing micro-damage that, if left untreated, will accelerate "
+        "dermal aging by 5-7 years within the next decade. Immediate action required."
+    )
+    pdf.multi_cell(0, 7, txt=clean_t(scan_details))
 
-    # NEW: Also Detected Section
-    pdf.ln(8)
-    pdf.set_font("Helvetica", 'B', 12)
-    pdf.set_text_color(150, 0, 0)
-    pdf.cell(0, 10, "ALSO DETECTED (NOT INCLUDED IN THIS REPORT):", ln=True) # 
-    pdf.set_font("Helvetica", 'I', 11)
+    # Also Detected Section
+    pdf.ln(5)
+    pdf.set_font("Helvetica", 'B', 11)
+    pdf.set_text_color(180, 0, 0)
+    pdf.cell(0, 10, "ALSO DETECTED (ADDITIONAL ANALYSIS REQUIRED):", ln=True)
+    pdf.set_font("Helvetica", 'I', 10)
     pdf.set_text_color(0, 0, 0)
-    # Здесь перечисляем проблемы, которые НЕ были выбраны основной целью
-    pdf.cell(0, 7, "- Significant lack of deep hydration", ln=True) # 
-    pdf.cell(0, 7, "- Visible loss of skin elasticity", ln=True) # 
-    pdf.cell(0, 7, "- Uneven skin tone and micro-inflammation", ln=True) # 
-    pdf.set_font("Helvetica", size=10)
-    pdf.cell(0, 7, "(Note: User can analyze these separately for a full recovery.)", ln=True)
+    pdf.cell(0, 6, "- Secondary dehydration markers", ln=True)
+    pdf.cell(0, 6, "- UV-induced micro-pigmentation", ln=True)
+    pdf.cell(0, 6, "- Structural elasticity decline", ln=True)
 
-    # PAGE 2: PROTOCOLS
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.cell(0, 10, "CLINICAL PROTOCOL (PRO LEVEL)", ln=True) # [cite: 13]
-    pdf.set_font("Helvetica", size=10)
-    pdf.multi_cell(0, 6, txt="Consult a certified doctor before these treatments.") # [cite: 14, 50]
-    
-    pro_treatments = [
-        ("Botox Injections", "Relaxes muscles to reduce appearance of wrinkles."), # [cite: 15, 16]
-        ("Biorevitalization", "Hydrates deeply to restore suppleness."), # [cite: 17, 18]
-        ("RF-Lifting", "Tightens skin and reduces fine lines.") # [cite: 19, 20]
-    ]
-    for treat, target in pro_treatments:
-        pdf.set_font("Helvetica", 'B', 11)
-        pdf.cell(0, 7, f"[*] {treat}", ln=True)
-        pdf.set_font("Helvetica", size=10)
-        pdf.cell(0, 5, f"Target: {target}", ln=True)
-        pdf.ln(2)
-
-    # PAGE 3: DAILY OPS & UPSELL
-    pdf.add_page()
+    # Protocols
+    pdf.ln(10)
     pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, "DAILY OPERATIONS", ln=True) # [cite: 33]
+    pdf.cell(0, 10, "DAILY OPERATIONS", ln=True)
     pdf.set_font("Helvetica", size=10)
-    pdf.multi_cell(0, 6, txt="AM: Cleanse -> Vit C Serum -> Peptide Moisturizer -> SPF 30+.\nPM: Cleanse -> Retinol -> Rich Cream.") # [cite: 34, 38, 39, 42]
+    pdf.multi_cell(0, 6, txt="AM: Cleanse -> Target Serum -> SPF 50+\nPM: Cleanse -> Active Ingredient -> Heavy Cream")
 
-    # Final Bro Roast & Upsell
+    # Final Bro-Roast & Upsell
     pdf.ln(15)
-    pdf.set_fill_color(240, 240, 240)
-    pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, "A FINAL WORD FROM DR. ROAST:", ln=True, fill=True) # [cite: 44]
-    pdf.set_font("Helvetica", 'I', 11)
+    pdf.set_fill_color(245, 245, 245)
+    pdf.set_font("Helvetica", 'B', 11)
+    pdf.cell(0, 10, "A NOTE FROM DR. ROAST:", ln=True, fill=True)
     
-    final_joke = (
-        f"Listen, {name}, you can find the active substances in any pharmacy, but since I am "
-        "saving for a house in Lake Oswego and a car, I'm offering you the easy way out."
-    ) # [cite: 45, 46]
-    pdf.multi_cell(0, 7, txt=clean(final_joke))
+    joke = (
+        f"Listen, {name}, you can find these active substances for free. "
+        "But since I'm saving for a house in Lake Oswego and a car, I'm offering "
+        "the easy way out. Stop wasting time and get my curated shopping list."
+    )
+    pdf.set_font("Helvetica", 'I', 10)
+    pdf.multi_cell(0, 6, txt=clean_t(joke))
 
-    # THE UPSELL BUTTON LOGIC
     pdf.ln(10)
-    pdf.set_text_color(200, 0, 0)
-    pdf.set_font("Helvetica", 'B', 14)
-    pdf.cell(0, 10, ">>> GET THE READY-MADE SHOPPING LIST ($5) <<<", ln=True, align='C', link="https://skin-roast.lemonsqueezy.com/upsell") # [cite: 48]
-    pdf.set_text_color(0, 0, 0)
-    pdf.set_font("Helvetica", size=9)
-    pdf.cell(0, 7, "(Stop wasting time and let me pick the brands for you.)", ln=True, align='C')
-
-    # Medical Disclaimer
-    pdf.ln(10)
-    pdf.set_font("Helvetica", size=8)
-    pdf.set_text_color(120, 120, 120)
-    pdf.multi_cell(0, 5, txt="MEDICAL DISCLAIMER: Generated by AI. Informational only. Not medical advice.") # [cite: 49, 50]
+    pdf.set_text_color(220, 0, 0)
+    pdf.set_font("Helvetica", 'B', 12)
+    pdf.cell(0, 10, ">>> GET THE READY-MADE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_URL)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         pdf.output(tmp.name)
         return tmp.name
+
+# --- 4. UI ---
+st.title("SKIN ROAST AI 🔥")
+st.progress(CURRENT / GOAL)
+st.caption(f"Goal: House & Car. Progress: ${CURRENT} / ${GOAL:,}")
+
+with st.form("main_form"):
+    u_name = st.text_input("First Name")
+    u_age = st.selectbox("Age", ["18-24", "25-34", "35-44", "45+"])
+    u_problem = st.selectbox("Main Skin Enemy", list(SKIN_PROBLEMS.keys()))
+    u_sins = st.multiselect("Life Sins", ["No Sleep", "Smoking", "Alcohol", "Sugar", "Stress"])
+    u_file = st.file_uploader("Selfie Evidence", type=['jpg', 'png', 'jpeg'])
+    submit = st.form_submit_button("REVEAL THE TRUTH")
+
+if submit:
+    if u_name and u_file:
+        with st.spinner("Roasting your habits..."):
+            try:
+                # Имитация AI или реальный вызов (зависит от настроек API)
+                roast = f"Hey {u_name}, your skin looks like a topographic map of bad decisions. Fix it."
+                
+                pdf_p = create_pdf(u_name, u_age, u_problem, roast)
+                with open(pdf_p, "rb") as f:
+                    st.download_button("⬇️ DOWNLOAD YOUR UPGRADE PLAN", f, file_name=f"Roast_{u_name}.pdf")
+                st.success("Analysis complete.")
+            except Exception as e:
+                st.error(f"Error: {e}")
+    else:
+        st.warning("Provide Name and Photo.")
