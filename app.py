@@ -40,49 +40,118 @@ SKIN_DATABASE = {
 }
 
 # --- 4. PDF GENERATOR ---
+# --- PDF GENERATOR (MATCHING YOUR TEMPLATE) ---
 def create_pdf_report(name, age, problem, roast_text):
     pdf = FPDF()
     pdf.add_page()
     
-    # Header
-    pdf.set_font("Helvetica", 'B', 24)
-    pdf.cell(0, 20, f"OFFICIAL SKIN DOSSIER: {name.upper()}", ln=True, align='C')
-    pdf.set_font("Helvetica", 'I', 10)
-    pdf.cell(0, 5, f"Subject Age Group: {age} | Target Issue: {problem}", ln=True, align='C')
-    
-    # The Roast
-    pdf.ln(15)
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.set_text_color(255, 75, 75)
-    pdf.cell(0, 10, "THE ROAST (TRUTH HURTS):", ln=True)
-    pdf.set_text_color(0, 0, 0)
-    pdf.set_font("Helvetica", size=12)
-    pdf.multi_cell(0, 8, txt=roast_text.encode('latin-1', 'ignore').decode('latin-1'))
-    
-    # The Solution
-    pdf.ln(10)
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.cell(0, 10, "THE RESCUE PLAN:", ln=True)
-    pdf.set_font("Helvetica", size=12)
-    advice = SKIN_DATABASE.get(problem, "Basic hygiene. Start there.")
-    pdf.multi_cell(0, 8, txt=f"Strategy: {advice}\n\nRoutine:\nAM: Cleanse -> Target Serum -> SPF 50+\nPM: Cleanse -> Treatment -> Heavy Moisturizer")
+    # helper для очистки текста (чтобы PDF не падал на спецсимволах)
+    def clean(t):
+        return str(t).encode('latin-1', 'ignore').decode('latin-1')
 
-    # The Final Joke (Hard but Motivating)
-    pdf.ln(20)
+    # PAGE 1: THE ROAST
+    pdf.set_font("Helvetica", 'B', 22)
+    pdf.cell(0, 20, f"{clean(name).upper()}'S UPGRADE PLAN", ln=True, align='C')
+    
+    pdf.ln(10)
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, "THE VIBE CHECK:", ln=True)
+    pdf.set_font("Helvetica", size=11)
+    pdf.multi_cell(0, 7, txt=clean(roast_text))
+    
+    pdf.ln(10)
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, f"DEEP SCAN: {clean(problem).upper()}", ln=True)
+    pdf.set_font("Helvetica", size=11)
+    # Пример расширенного анализа (можно подтягивать из GPT)
+    deep_scan = f"The current state of your {problem} suggests a long-term relationship with stress and questionable life choices. It's not a disaster, but it's a fixer-upper."
+    pdf.multi_cell(0, 7, txt=clean(deep_scan))
+
+    # PAGE 2: CLINICAL & HOME WEAPONS
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.cell(0, 10, "CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
+    pdf.set_font("Helvetica", size=10)
+    pdf.multi_cell(0, 6, txt="Professional treatments for faster results. Consult a certified doctor first.")
+    
+    pro_treatments = [
+        ("Botox Injections", "Relaxes facial muscles to reduce appearance of wrinkles."),
+        ("Biorevitalization", "Hydrates deeply to help restore skin suppleness."),
+        ("RF-Lifting", "Non-invasively tightens the skin and reduces fine lines.")
+    ]
+    for treat, target in pro_treatments:
+        pdf.set_font("Helvetica", 'B', 11)
+        pdf.cell(0, 7, f"[*] {treat}", ln=True)
+        pdf.set_font("Helvetica", size=10)
+        pdf.cell(0, 5, f"Target: {target}", ln=True)
+        pdf.ln(2)
+
+    pdf.ln(5)
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, "YOUR HOME WEAPONS", ln=True)
+    
+    logic = SKIN_DATABASE.get(problem, "Basic hygiene.")
+    weapons = [
+        ("Retinol (Vitamin A)", "Boosts collagen production overnight."),
+        ("Peptides", "Enhances skin barrier function and firmness."),
+        ("Vitamin C", "Brightens skin and promotes collagen production.")
+    ]
+    for weapon, why in weapons:
+        pdf.set_font("Helvetica", 'B', 11)
+        pdf.cell(0, 7, f"[+] {weapon}", ln=True)
+        pdf.set_font("Helvetica", size=10)
+        pdf.cell(0, 5, f"Why: {why}", ln=True)
+        pdf.ln(2)
+
+    # PAGE 3: SAFETY & DAILY OPERATIONS
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.set_text_color(255, 0, 0)
+    pdf.cell(0, 10, "[!] SAFETY PROTOCOL (READ THIS):", ln=True)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Helvetica", size=10)
+    safety_rules = [
+        "1. Active ingredients (Retinol, Acids) are powerful. They can burn if misused.",
+        "2. ALWAYS use SPF 30+ if you use Retinol or Acids. No excuses.",
+        "3. PATCH TEST: Apply a small amount on your neck first.",
+        "4. Start slowly: Use Retinol 2 times a week, then increase."
+    ]
+    pdf.multi_cell(0, 6, txt="\n".join(safety_rules))
+
+    pdf.ln(10)
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, "DAILY OPERATIONS", ln=True)
+    pdf.set_font("Helvetica", size=10)
+    ops = (
+        "MORNING:\n1. Cleanse with a gentle cleanser.\n2. Apply Vitamin C serum.\n3. Moisturize.\n4. SPF 30+.\n\n"
+        "EVENING:\n1. Cleanse thoroughly.\n2. Apply Retinol.\n3. Rich moisturizer."
+    )
+    pdf.multi_cell(0, 6, txt=ops)
+
+    # FINAL ROAST JOKE (THE BRO COMIC STYLE)
+    pdf.ln(15)
     pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, "A FINAL WORD FROM THE COMIC:", ln=True, fill=True)
+    pdf.cell(0, 10, "HONEST NOTE FROM THE COMIC:", ln=True, fill=True)
     pdf.set_font("Helvetica", 'I', 11)
     
+    # Та самая подбадривающая, но жесткая шутка
     final_joke = (
-        f"Look, {name}, I've seen better complexions on a 2,000-year-old mummy, but at least they have "
-        "the excuse of being dead. You're still here. Your face isn't a lost cause—it's just a "
-        "fixer-upper. You wouldn't let your car rust into the ground, so stop doing it to your "
-        "only head. Apply the cream, drink some water, and maybe—just maybe—one day people "
-        "will look at you without wondering if you've been living in a cave. Now go fix it."
+        f"Listen, {name}, right now your face has the texture of a crumpled-up tax return from 2008. "
+        "But here's the good news: unlike your crypto portfolio, skin actually has a recovery plan. "
+        "I'm roasting you because I care—mostly about my future house—but also because you're too "
+        "valuable to look like a background character in a post-apocalyptic movie. Stop using 3-in-1 "
+        "body wash on your face, stick to the plan, and let's turn that 'existential dread' glow "
+        "into actual skin health. You've got this. Now go wash your face."
     )
-    pdf.multi_cell(0, 7, txt=final_joke.encode('latin-1', 'ignore').decode('latin-1'))
-    
+    pdf.multi_cell(0, 7, txt=clean(final_joke))
+
+    # Disclaimer
+    pdf.ln(10)
+    pdf.set_font("Helvetica", size=8)
+    pdf.set_text_color(100, 100, 100)
+    pdf.multi_cell(0, 4, txt="MEDICAL DISCLAIMER: Generated by AI for info only. Not medical advice. Seek a physician.")
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         pdf.output(tmp.name)
         return tmp.name
