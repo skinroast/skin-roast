@@ -404,6 +404,6 @@ else:
 
 **Chto teper budet:**
 * Esli ty vyberesh "I use 3-in-1 Body Wash", AI v PDF skajet: *"Ivan, seriously? 3-in-1 soap? You might as well wash your face with engine degreaser."*
-* V PDF zagolovke budet: **IVAN'S UPGRADE PLAN** (vmesto obshego).
+* V PDF zagolovke budet: **"IVAN'S UPGRADE PLAN"** (vmesto obshego).
 
 Zagrujay! 📝
