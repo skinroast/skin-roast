@@ -4,101 +4,146 @@ from fpdf import FPDF
 import tempfile
 import base64
 
-# --- 1. SETTINGS & FULL DATABASE ---
-st.set_page_config(page_title="Skin Roast AI", page_icon="🔥")
+# --- 1. CONFIGURATION ---
+st.set_page_config(page_title="Skin Roast AI", page_icon="🔥", layout="centered")
 
 if "OPENAI_API_KEY" in st.secrets:
     client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 else:
-    st.error("API Key missing.")
+    st.error("API Key is missing. Check Streamlit Secrets.")
 
-# Динамическая база под каждую проблему
-SPECIFIC_LOGIC = {
-    "Redness": {
-        "home": [("Azelaic Acid", "Reduces inflammation."), ("Centella", "Calms the fire.")],
-        "pro": [("Phototherapy (IPL)", "Targeting broken capillaries."), ("Laser", "Vascular reset.")],
-        "deep": "Your skin's barrier is compromised, likely due to over-cleansing or environmental stress."
-    },
-    "Wrinkles / Aging": {
-        "home": [("Retinol", "Collagen king."), ("Peptides", "Structural support.")],
-        "pro": [("Botox", "Muscle freeze."), ("RF-Lifting", "Tightening.")],
-        "deep": "Visible collagen degradation detected. The structural integrity is thinning."
-    },
-    "Eye Bags / Dark Circles": {
-        "home": [("Caffeine", "De-puffing."), ("Vit K", "Blood flow.")],
-        "pro": [("Fillers", "Volume restoration."), ("Lymphatic drainage", "Fluid removal.")],
-        "deep": "Periorbital exhaustion. This is more about sleep debt and thin skin than just 'tiredness'."
-    }
-    # ... остальные 7 проблем добавляются по аналогии
+UPSELL_URL = "https://skin-roast.lemonsqueezy.com/upsell"
+GOAL, CURRENT = 6150000, 260
+
+# --- 2. МЕДИЦИНСКАЯ БАЗА ЗНАНИЙ (10 Проблем) ---
+SKIN_DATABASE = {
+    "Acne / Pimples": {"home": [("Salicylic Acid", "Deep pore cleansing."), ("Benzoyl Peroxide", "Kills acne bacteria.")], "pro": "Chemical Peels"},
+    "Wrinkles / Aging": {"home": [("Retinol", "Collagen king."), ("Peptides", "Elasticity support.")], "pro": "Botox / RF-Lifting"},
+    "Eye Bags / Dark Circles": {"home": [("Caffeine", "Fluid drainage."), ("Vitamin K", "Brightening.")], "pro": "Fillers / Lymphatic Drainage"},
+    "Dryness / Flaking": {"home": [("Ceramides", "Barrier repair."), ("Hyaluronic Acid", "Hydration.")], "pro": "Biorevitalization"},
+    "Oily Skin": {"home": [("Niacinamide", "Oil control."), ("Clay", "Toxin removal.")], "pro": "HydraFacial"},
+    "Pigmentation": {"home": [("Vitamin C", "Evening tone."), ("Tranexamic Acid", "Dark spot fading.")], "pro": "IPL / Laser"},
+    "Blackheads": {"home": [("BHA", "Oil dissolution."), ("Oil Cleanser", "Deep pore prep.")], "pro": "Manual Extraction"},
+    "Redness / Irritation": {"home": [("Azelaic Acid", "Redness control."), ("Centella", "Soothing.")], "pro": "Phototherapy"},
+    "Large Pores": {"home": [("Retinoids", "Pore shrinking."), ("BHA", "Texture refinement.")], "pro": "Fractional Laser"},
+    "Dullness": {"home": [("Glycolic Acid", "Exfoliation."), ("Vit C", "Glow.")], "pro": "Mesotherapy"}
 }
 
-def create_pdf(name, age, problem, roast_text, routine):
+# --- 3. ПОЛНЫЙ PDF-ГЕНЕРАТОР (4 СТРАНИЦЫ) ---
+def create_comprehensive_pdf(name, age, problem, roast_text, routine, sins):
     pdf = FPDF()
     def clean(t): return str(t).encode('latin-1', 'ignore').decode('latin-1')
-    data = SPECIFIC_LOGIC.get(problem, SPECIFIC_LOGIC["Wrinkles / Aging"])
+    data = SKIN_DATABASE.get(problem, SKIN_DATABASE["Wrinkles / Aging"])
 
-    # PAGE 1: VIBE & SCAN
+    # PAGE 1: THE BRUTAL ANALYSIS
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 22)
-    pdf.cell(0, 20, f"{clean(name).upper()}'S UPGRADE PLAN", ln=True, align='C')
+    pdf.set_font("Helvetica", 'B', 24)
+    pdf.cell(0, 20, f"OFFICIAL SKIN DOSSIER: {clean(name).upper()}", ln=True, align='C')
+    pdf.set_font("Helvetica", 'I', 10)
+    pdf.cell(0, 5, f"Subject Age: {age} | Targets: {clean(problem)}", ln=True, align='C')
+
+    pdf.ln(15)
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_text_color(255, 75, 75)
+    pdf.cell(0, 10, "THE VIBE CHECK (AI ROAST):", ln=True)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Helvetica", size=12)
+    pdf.multi_cell(0, 8, txt=clean(roast_text))
+
+    pdf.ln(10)
+    pdf.set_font("Helvetica", 'B', 16)
+    pdf.cell(0, 10, "EXPANDED DEEP SCAN:", ln=True)
+    scan_text = (f"Analysis of {problem} at age {age} shows structural instability. "
+                 f"Current routine ({routine}) and lifestyle factors ({', '.join(sins)}) "
+                 "have led to accelerated dermal aging. Immediate reset is required.")
+    pdf.set_font("Helvetica", size=11)
+    pdf.multi_cell(0, 7, txt=clean(scan_text))
+
+    # PAGE 2: CLINICAL PROTOCOLS
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 18)
+    pdf.cell(0, 15, "CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
+    pdf.set_font("Helvetica", size=11)
+    pdf.multi_cell(0, 7, txt=f"To address {problem} effectively, consider these professional treatments:")
     
-    pdf.ln(10); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "THE VIBE CHECK:", ln=True)
-    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean(roast_text))
-
-    pdf.ln(10); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, f"DEEP SCAN: {clean(problem).upper()}", ln=True)
-    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean(data["deep"]))
-
-    # PAGE 2: WEAPONS
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 10, "CLINICAL PROTOCOL (PRO)", ln=True)
-    for t, d in data["pro"]:
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 7, f"[*] {t}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.cell(0, 5, f"Target: {d}", ln=True); pdf.ln(2)
-
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "HOME WEAPONS", ln=True)
-    for w, y in data["home"]:
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 7, f"[+] {w}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.cell(0, 5, f"Why: {y}", ln=True); pdf.ln(1)
-
-    # PAGE 3: ROUTINE & JOKE
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "RESCUE ROUTINE", ln=True)
+    pdf.ln(5)
+    pdf.set_font("Helvetica", 'B', 12)
+    pdf.cell(0, 10, f"[*] {data['pro']}", ln=True)
     pdf.set_font("Helvetica", size=10)
-    ops = f"AM: Cleanse -> {data['home'][0][0]} -> SPF 50+\nPM: Cleanse -> {data['home'][1][0]} -> Barrier Repair."
-    pdf.multi_cell(0, 7, txt=clean(ops))
+    pdf.multi_cell(0, 6, txt="Consult a licensed dermatologist for clinical procedures.")
 
-    pdf.ln(20); pdf.set_fill_color(240, 240, 240); pdf.set_font("Helvetica", 'B', 12)
-    pdf.cell(0, 10, "FINAL BRO-ROAST:", ln=True, fill=True)
+    # PAGE 3: HOME WEAPONS & ROUTINE
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 18)
+    pdf.cell(0, 15, "YOUR HOME WEAPONS & ROUTINE", ln=True)
+    for weapon, why in data['home']:
+        pdf.set_font("Helvetica", 'B', 13); pdf.cell(0, 10, f"[+] {weapon}", ln=True)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=f"Why: {why}"); pdf.ln(2)
+
+    pdf.ln(10)
+    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "DAILY OPS (RESCUE MISSION):", ln=True)
+    pdf.set_font("Helvetica", size=11)
+    pdf.multi_cell(0, 7, txt=f"AM: Cleanse -> {data['home'][1][0]} -> SPF 50+\nPM: Cleanse -> {data['home'][0][0]} -> Barrier Repair Cream.")
+
+    # PAGE 4: FINAL WORD & UPSELL
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 16); pdf.set_fill_color(240, 240, 240)
+    pdf.cell(0, 15, "FINAL WORD FROM THE COMIC:", ln=True, fill=True)
     pdf.set_font("Helvetica", 'I', 11)
-    final_joke = f"Look, {name}, I'm roasting you because you're too valuable to look like a 'before' photo. Fix it and buy me that house."
-    pdf.multi_cell(0, 7, txt=clean(final_joke))
+    
+    final_joke = (f"Listen, {name}, your skin has the texture of a crumpled-up tax return. "
+                  "Fix it now, or spend the next 20 years explaining why you look like a "
+                  "dehydrated raisin. I'm rooting for you—mostly for my Lake Oswego fund.")
+    pdf.multi_cell(0, 8, txt=clean(final_joke))
+
+    pdf.ln(20)
+    pdf.set_text_color(200, 0, 0); pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, ">>> GET THE FULL SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_URL)
+    
+    pdf.ln(20); pdf.set_text_color(100, 100, 100); pdf.set_font("Helvetica", size=8)
+    pdf.multi_cell(0, 5, txt="MEDICAL DISCLAIMER: Not medical advice. Informational purposes only.")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         pdf.output(tmp.name); return tmp.name
 
-# --- 3. UI ---
-with st.form("roast_logic"):
-    u_name = st.text_input("Name")
-    u_age = st.selectbox("Age", ["18-24", "25-34", "35-44", "45-54", "55+"])
-    u_enemy = st.selectbox("Problem", list(SPECIFIC_LOGIC.keys()))
-    u_file = st.file_uploader("Selfie", type=['jpg', 'png'])
-    submit = st.form_submit_button("GENERATE")
+# --- 4. UI ---
+st.title("SKIN ROAST AI 🔥")
+st.progress(CURRENT / GOAL)
+st.caption(f"Progress to Lake Oswego House: ${CURRENT} / ${GOAL:,}")
 
-if submit and u_file:
-    with st.spinner("Real analysis in progress..."):
-        base64_img = base64.b64encode(u_file.read()).decode('utf-8')
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a witty Bro-Roast comedian. IMPORTANT: Compare the User's photo with their chosen problem. If they choose 'Redness' but the photo is clear, call out their lie. Be cynical but scientific. Max 100 words."},
-                {"role": "user", "content": [
-                    {"type": "text", "text": f"Name: {u_name}, Chosen Problem: {u_enemy}. Roast my skin based ONLY on what you see in the photo."},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
-                ]}
-            ]
-        )
-        roast = response.choices[0].message.content
-        st.write(roast)
-        pdf_p = create_pdf(u_name, u_age, u_enemy, roast, "Current Routine")
-        with open(pdf_p, "rb") as f:
-            st.download_button("Download Plan", f, file_name="Roast.pdf")
+with st.form("roast_logic"):
+    c1, c2 = st.columns(2)
+    with c1:
+        u_name = st.text_input("Name")
+        u_age = st.selectbox("Age Group", ["18-24", "25-34", "35-44", "45-54", "55+"])
+    with c2:
+        u_enemy = st.selectbox("Main Skin Enemy", list(SKIN_DATABASE.keys()))
+        u_routine = st.selectbox("Current Routine", ["None/Water", "Soap", "Basic Moisturizer", "Full Routine"])
+    
+    u_sins = st.multiselect("Lifestyle Sins", ["Smoking", "No Sleep", "Junk Food", "Stress", "No SPF"])
+    u_file = st.file_uploader("Upload Selfie", type=['jpg', 'png', 'jpeg'])
+    submit = st.form_submit_button("GENERATE FULL REPORT")
+
+if submit and u_file and u_name:
+    with st.spinner("Analyzing photo and habits..."):
+        try:
+            # РЕАЛЬНЫЙ АНАЛИЗ ФОТО
+            base64_img = base64.b64encode(u_file.read()).decode('utf-8')
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a witty Bro-Roast comedian. Analyze the photo and call out the TRUTH. If the photo looks fine but they chose 'Acne', tease them for being a perfectionist. Max 100 words."},
+                    {"role": "user", "content": [
+                        {"type": "text", "text": f"Name: {u_name}, Age: {u_age}, Goal: {u_enemy}. Roast me."},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
+                    ]}
+                ]
+            )
+            roast = response.choices[0].message.content
+            st.success("Analysis Complete.")
+            
+            pdf_p = create_comprehensive_pdf(u_name, u_age, u_enemy, roast, u_routine, u_sins)
+            with open(pdf_p, "rb") as f:
+                st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{u_name}.pdf")
+        except Exception as e:
+            st.error(f"Error: {e}")
