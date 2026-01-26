@@ -116,34 +116,42 @@ else:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-                mega_prompt = f"""
-                You are a world-class clinical dermatologist and a witty 'Bro-Coach'. 
-                Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
-                
-                STRICT JSON STRUCTURE:
-                {{
-                  "header": "Skin Upgrade Protocol for {u_name}",
-                  "roast": "4-5 sentences. Sandwich Roast: Respect vibe -> sharp witty metaphor about {u_sins} -> support. No cheap insults.",
-                  "clinical_analysis": "Minimum 8 sentences. Deep medical analysis: texture, barrier status, and vascular patterns. Serious tone.",
-                  "hidden_findings": "2-3 other issues detected on photo besides {u_enemy}.",
-                  "clinical_protocol": [
-                    {{"name": "Procedure", "description": "3 detailed sentences on mechanism and clinical results."}}
-                  ],
-                  "home_weapons": [
-                    {{"name": "Active Ingredient", "explanation": "3 sentences on molecular action for this user."}}
-                  ],
-                  "detailed_routine": [
-                    "Morning Step 1: Technique (e.g. rub in hands 10s, massage on wet skin 60s).",
-                    "Morning Step 2: Apply Serum...",
-                    "Morning Step 3: Sealing Step with Moisturizer/SPF (explain occlusion)..."
-                  ],
-                  "disclaimers": "Medical disclaimer: Informational only, consult a doctor.",
-                  "final_joke": "One final inspiring but sharp joke.",
-                  "monetization": "Message about buying curated brands list for $5 to help my Jaguar fund."
-                }}
-                Use logic: {logic['ingredients']} and {logic['procedures']}.
-                """
+               mega_prompt = f"""
+You are a top-tier clinical dermatologist and a witty 'Bro-Coach'. 
+Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
 
+STRICT CONTENT RULES:
+1. THE VIBE CHECK: Use the 'Sandwich Roast' (Respect -> Sharp Metaphor -> Support). Avoid cheap insults.
+2. CLINICAL ANALYSIS: Min 8 sentences. Deep dive into photo texture, barrier, and vascular patterns. [cite: 4, 16]
+3. HOME WEAPONS (ACTIVES): For EVERY active ingredient, you MUST include a specific 'Safety Warning' (e.g., Vitamin C requires SPF to avoid spots, Retinol requires gradual introduction).
+4. SEALING PROTOCOL: Every serum must be locked with moisturizer to prevent evaporation. [cite: 165]
+5. DISCLAIMERS: You must provide TWO separate disclaimers: one for Medical/Legal and one for Active Ingredient Safety.
+
+STRICT JSON STRUCTURE:
+{{
+  "header": "Skin Upgrade Protocol for {u_name}",
+  "roast": "4-5 sentences.",
+  "clinical_analysis": "8+ sentences. Medical tone.",
+  "hidden_findings": "2-3 additional issues detected.",
+  "clinical_protocol": [
+    {{"name": "Procedure", "description": "3 sentences on action and result."}}
+  ],
+  "home_weapons": [
+    {{
+      "name": "Ingredient Name", 
+      "explanation": "3 sentences on molecular action.",
+      "safety_warning": "CRITICAL: Specific instruction on how not to ruin skin with this active (e.g. SPF requirement, patch test)."
+    }}
+  ],
+  "morning_routine": ["Detailed step with technique", "Sealing step with SPF"],
+  "evening_routine": ["Detailed step with technique", "Sealing step with barrier cream"],
+  "safety_disclaimer": "Detailed notice on actives: start slow, patch test, and the absolute necessity of SPF.",
+  "medical_notice": "Legal notice: Informational only, consult a doctor. ",
+  "final_joke": "Inspiring cynical joke.",
+  "monetization": "Buy our $5 list to help my Jaguar fund. [cite: 44, 47]"
+}}
+Use logic: {logic['ingredients']} and {logic['procedures']}.
+"""
                 response = client.chat.completions.create(
                     model="gpt-4o", response_format={ "type": "json_object" },
                     messages=[{"role": "system", "content": mega_prompt},
