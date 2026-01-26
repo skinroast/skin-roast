@@ -130,12 +130,12 @@ else:
 
     if submit and u_file and u_name:
         with st.spinner("Executing clinical scan..."):
-           try:
+            try:
+                # 1. Подготовка данных
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-                # Используем обычную строку и удвоенные скобки для JSON {{ }}
-                # Это защищает от SyntaxError и ошибок форматирования
+                # 2. Промпт без f-строки для избежания конфликта скобок
                 raw_prompt = """
                 You are a cynical, world-class clinical dermatologist with a dark sense of humor. 
                 Generate a premium 4-page report in JSON for {name}, age {age}.
@@ -143,10 +143,10 @@ else:
                 
                 STRICT CONTENT RULES:
                 1. THE REALITY CHECK: 6-8 sentences of brutal, cynical 'Bro Roast'. Dark medical humor about {sins}.
-                2. CLINICAL ANALYSIS: Minimum 12 full sentences. Deep dive into epidermal barrier, collagen density, and vascular patterns.
+                2. CLINICAL ANALYSIS: Minimum 12 full sentences. Deep dive into epidermal barrier and collagen density.
                 3. CLINICAL PROTOCOL: EXACTLY 3 procedures from: {proc_list}. 4 sentences for each.
                 4. HOME WEAPONS: EXACTLY 3 actives from: {ing_list}. 3 sentences + RED warning for each.
-                5. DETAILED ROUTINE: Separation of Morning/Evening. EVERY step must have 3 sentences of technique (massage, wait times).
+                5. DETAILED ROUTINE: Separation of Morning/Evening. EVERY step must have 3 sentences of technique.
                 6. MONETIZATION: Pitch about the $5 brands list to fund a Jaguar E-Type V12.
 
                 STRICT JSON STRUCTURE:
@@ -160,7 +160,6 @@ else:
                 }}
                 """
                 
-                # Подставляем переменные через .format()
                 mega_prompt = raw_prompt.format(
                     name=u_name, 
                     age=u_age, 
@@ -171,6 +170,7 @@ else:
                     ing_list=logic['ingredients']
                 )
 
+                # 3. Запрос к API
                 response = client.chat.completions.create(
                     model="gpt-4o", 
                     response_format={ "type": "json_object" },
@@ -182,8 +182,9 @@ else:
                     ]
                 )
                 
-                # Проверка на пустой ответ (NoneType error fix)
                 raw_content = response.choices[0].message.content
+                
+                # 4. Проверка и генерация PDF
                 if not raw_content:
                     st.error("AI returned an empty response. Try again.")
                 else:
@@ -191,5 +192,7 @@ else:
                     pdf_path = create_premium_pdf(report_data)
                     with open(pdf_path, "rb") as f:
                         st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{u_name}.pdf")
+            
             except Exception as e:
+                # Этот блок теперь стоит строго под 'try'
                 st.error(f"Critical Error: {e}")
