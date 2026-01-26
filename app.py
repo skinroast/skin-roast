@@ -14,7 +14,7 @@ else:
     st.error("API Key missing. Check Streamlit Secrets.")
 
 UPSELL_URL = "https://skin-roast.lemonsqueezy.com/upsell"
-PATREON_LINK = "https://www.patreon.com/your_link_here"
+PATREON_LINK = "https://www.patreon.com/your_link_here" 
 
 # --- 2. МЕДИЦИНСКАЯ МАТРИЦА ---
 TREATMENT_LOGIC = {
@@ -29,7 +29,6 @@ TREATMENT_LOGIC = {
 # --- 3. ГЕНЕРАТОР PDF ---
 def clean_text(text):
     if isinstance(text, str):
-        # Очистка от спецсимволов и принудительный перевод в ASCII
         replacements = {'\u2018': "'", '\u2019': "'", '\u201c': '"', '\u201d': '"', '\u2013': '-', '\u2014': '-'}
         for char, rep in replacements.items():
             text = text.replace(char, rep)
@@ -40,38 +39,40 @@ def create_premium_pdf(data):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # PAGE 1: ANALYSIS
+    # PAGE 1: ANALYSIS & REALITY CHECK
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 22)
     pdf.cell(0, 15, clean_text(data.get('header', 'Skin Report')).upper(), ln=True, align='C')
     pdf.ln(5)
+    
     pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "1. THE REALITY CHECK (VIBE CHECK):", ln=True)
     pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data.get('roast', '')))
+
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "2. CLINICAL ANALYSIS:", ln=True)
     pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data.get('clinical_analysis', '')))
 
-    # PAGE 2: PROCEDURES & ACTIVES
+    # PAGE 2: CLINICAL STRATEGY
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "3. CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
     for proc in data.get('clinical_protocol', []):
         pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[*] {clean_text(proc.get('name'))}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc.get('description'))); pdf.ln(2)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc.get('description'))); pdf.ln(4)
+
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "4. YOUR HOME WEAPONS (ACTIVES)", ln=True)
     for weapon in data.get('home_weapons', []):
         pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon.get('name'))}", ln=True)
         pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon.get('explanation')))
-        pdf.set_font("Helvetica", 'B', 9); pdf.set_text_color(150, 0, 0)
+        pdf.set_font("Helvetica", 'B', 9); pdf.set_text_color(170, 0, 0)
         pdf.multi_cell(0, 5, txt=f"WARNING: {clean_text(weapon.get('safety_warning'))}")
-        pdf.set_text_color(0, 0, 0); pdf.ln(2)
+        pdf.set_text_color(0, 0, 0); pdf.ln(4)
 
-    # PAGE 3: ROUTINE (BATHROOM MIRROR VERSION)
+    # PAGE 3: DAILY OPERATIONS (WITH BORDER)
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. THE SEALING PROTOCOL (DAILY OPERATIONS)", ln=True, align='C')
     pdf.set_font("Helvetica", 'I', 9); pdf.cell(0, 10, "Cut along the line and tape this to your bathroom mirror.", ln=True, align='C')
     
     pdf.set_line_width(0.5)
-    pdf.rect(10, 40, 190, 160) # Сплошная рамка вместо пунктирной
-
+    pdf.rect(10, 40, 190, 160) 
     pdf.set_xy(15, 45)
     pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
     for step in data.get('morning_routine', []):
@@ -102,10 +103,12 @@ query_params = st.query_params
 access_granted = query_params.get("paid") == "true"
 
 if not access_granted:
-    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem;">⚠️ HONEST WARNING: Saving for a Jaguar E-Type. Each analysis helps.</div>', unsafe_allow_html=True)
-    try: st.image("scan_face.png", use_column_width=True)
-    except: st.info("🖼 scan_face.png missing.")
-    st.markdown('<h1 style="text-align: center; background: -webkit-linear-gradient(45deg, #FF4B2B, #FF416C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem;">YOUR MIRROR LIES. AI DOESN\'T.</h1>', unsafe_allow_html=True)
+    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px;">⚠️ <b>HONEST WARNING:</b> I am saving for a Jaguar E-Type. $10 analysis helps the dream.</div>', unsafe_allow_html=True)
+    try:
+        st.image("scan_face.png", use_column_width=True)
+    except:
+        st.info("🖼 scan_face.png missing.")
+    st.markdown('<h1 style="text-align: center; background: -webkit-linear-gradient(45deg, #FF4B2B, #FF416C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem;">YOUR MIRROR LIES.<br>AI DOESN\'T.</h1>', unsafe_allow_html=True)
     st.link_button("👉 UNLOCK MY ROAST ($10)", PATREON_LINK, type="primary", use_container_width=True)
 else:
     st.title("🔥 Skin Roast AI")
@@ -123,43 +126,44 @@ else:
             try:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
-             mega_prompt = f"""
-                You are a cynical, world-class clinical dermatologist with a dark sense of humor (vibe: Dr. House). 
-                Your patient is {u_name}, age {u_age}. They are paying for a brutal truth, not a bedtime story.
+                
+                mega_prompt = f"""
+                You are a cynical, world-class clinical dermatologist with a dark sense of humor. 
+                Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
+                Current routine: {u_routine}. Focus on {u_enemy}.
                 
                 STRICT CONTENT RULES:
-                1. THE REALITY CHECK: Write 4-5 sentences of dark, sharp, cynical 'Bro Roast'. Use a specific dark metaphor about {u_sins}. No 'classic film' or 'star' crap. Be a professional fixer who is tired of seeing people ruin their faces.
-                2. CLINICAL ANALYSIS: Minimum 10 sentences. Use heavy medical terminology. Deep dive into epidermal barrier, sebaceous activity, and dermal remodeling needed for {u_enemy}.
-                3. CLINICAL PROTOCOL: EXACTLY 3 high-end procedures from {logic['procedures']}. For EACH, write 3 sentences on the physiological mechanism and why it is a 'must' to save this face.
-                4. HOME WEAPONS: EXACTLY 3 actives from {logic['ingredients']}. Describe molecular action and include a 'Brutal Safety Warning' (e.g. skin peeling, SPF necessity).
-                5. DETAILED ROUTINE (THE CORE): For EVERY step, you MUST write 2-3 sentences of technique. 
-                   Example: "Massage for 60s like you're trying to scrub a crime scene, focus on the T-zone, rinse with ice-cold water to shock the vessels."
-                6. THE SEALING PRINCIPLE: Explain why applying serum without a cream is a financial crime (Trans-Epidermal Water Loss).
-                
+                1. THE REALITY CHECK: 4-5 sentences of sharp, cynical 'Bro Roast' about {u_sins}. Dark medical humor only.
+                2. CLINICAL ANALYSIS: Minimum 10 sentences. Deep medical dive into texture, barrier, and vascular patterns.
+                3. CLINICAL PROTOCOL: EXACTLY 3 procedures from: {logic['procedures']}. Each must have 3 detailed sentences.
+                4. HOME WEAPONS: EXACTLY 3 actives from: {logic['ingredients']}. Each must have 3 sentences + a RED safety warning.
+                5. DETAILED ROUTINE: For EVERY step, describe the EXACT technique (e.g. "Massage for 60s", "Warm 2 drops and press into skin").
+                6. MONETIZATION: Closing pitch about buying a brands list for $5 to help fund the author's Jaguar E-Type dream.
+
                 STRICT JSON STRUCTURE:
                 {{
                   "header": "Skin Upgrade Protocol for {u_name}",
-                  "roast": "Dark/Cynical Roast here",
+                  "roast": "Dark Roast here",
                   "clinical_analysis": "Long medical analysis here",
-                  "clinical_protocol": [ {{"name": "...", "description": "3 sentences"}} ],
-                  "home_weapons": [ {{"name": "...", "explanation": "3 sentences", "safety_warning": "..."}} ],
-                  "morning_routine": ["Step 1 with heavy technique", "Step 2 with technique", "Step 3 Sealing technique"],
+                  "clinical_protocol": [ {{"name": "Procedure", "description": "3 detailed sentences"}} ],
+                  "home_weapons": [ {{"name": "Active", "explanation": "3 sentences", "safety_warning": "Warning"}} ],
+                  "morning_routine": ["Step 1 with technique", "Step 2 with technique", "Step 3 Sealing technique"],
                   "evening_routine": ["Step 1 technique", "Step 2 technique", "Step 3 Sealing technique"],
-                  "safety_disclaimer": "Safety notice.",
+                  "safety_disclaimer": "Safety notice rules.",
                   "medical_notice": "Legal notice.",
-                  "final_joke": "One final dark medical joke about death/Jaguar.",
-                  "monetization": "Jaguar E-Type pitch."
+                  "final_joke": "Dark medical joke.",
+                  "monetization": "Jaguar message."
                 }}
                 """
-                Use logic: {logic['ingredients']} and {logic['procedures']}.
-                """
+
                 response = client.chat.completions.create(
-                    model="gpt-4o", response_format={ "type": "json_object" },
-                    messages=[{"role": "system", "content": mega_prompt},
-                              {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}]}]
+                    model="gpt-4o", response_format={{ "type": "json_object" }},
+                    messages=[{{"role": "system", "content": mega_prompt}},
+                              {{"role": "user", "content": [{{"type": "image_url", "image_url": {{"url": f"data:image/jpeg;base64,{{base64_img}}"}}}}]}}]
                 )
+                
                 report_data = json.loads(response.choices[0].message.content)
                 pdf_path = create_premium_pdf(report_data)
                 with open(pdf_path, "rb") as f:
-                    st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{u_name}.pdf")
-            except Exception as e: st.error(f"Error: {e}")
+                    st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{{u_name}}.pdf")
+            except Exception as e: st.error(f"Error: {{e}}")
