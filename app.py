@@ -63,12 +63,11 @@ def create_premium_pdf(data):
         pdf.multi_cell(0, 5, txt=f"WARNING: {clean_text(weapon['safety_warning'])}")
         pdf.set_text_color(0, 0, 0); pdf.ln(2)
 
-    # PAGE 3: ROUTINE WITH BORDER
+    # PAGE 3: ROUTINE (FIXED BORDER & LISTS)
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. THE SEALING PROTOCOL (DAILY OPERATIONS)", ln=True, align='C')
     pdf.set_font("Helvetica", 'I', 9); pdf.cell(0, 10, "Cut along the line and tape this to your bathroom mirror.", ln=True, align='C')
     
-    # Рисуем сплошную рамку (вместо пунктирной)
     pdf.set_line_width(0.5)
     pdf.rect(10, 40, 190, 160) 
 
@@ -127,19 +126,24 @@ else:
                 logic = TREATMENT_LOGIC[u_enemy]
                 mega_prompt = f"""
                 You are a world-class clinical dermatologist and a witty 'Bro-Coach'. Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
-                Current routine: {u_routine}. Focus on {u_enemy}.
+                Current user routine: {u_routine}. Focus on {u_enemy}.
+                
+                STRICT CONTENT RULES:
+                1. CLINICAL PROTOCOL: List EXACTLY 3 procedures from: {logic['procedures']}. Each must have 3 detailed sentences about how it works and the results.
+                2. HOME WEAPONS: List EXACTLY 3 ingredients from: {logic['ingredients']}. Each must have 3 sentences explaining the molecular action for this user, plus a RED safety warning.
+                3. DETAILED ROUTINE: Describe Morning and Evening steps separately. For EVERY step, describe the EXACT technique (e.g. "Massage for 60s", "Warm 2 drops between palms and press into skin", "Wait 3 mins before next step").
+                4. MONETIZATION: Include a message about buying a curated brands list for $5 to help fund the author's Jaguar E-Type dream.
                 
                 STRICT JSON STRUCTURE:
                 {{
                   "header": "Skin Upgrade Protocol for {u_name}",
                   "roast": "Nice start -> unique sharp scenario roast about {u_sins} -> support.",
-                  "clinical_analysis": "Minimum 8 full sentences. Deep photo analysis.",
-                  "clinical_protocol": [ {{"name": "Procedure", "description": "3 sentences"}} ],
-                  "home_weapons": [ {{"name": "Active", "explanation": "3 sentences", "safety_warning": "..."}} ],
-                  "morning_routine": ["Detailed Step with technique"],
-                  "evening_routine": ["Detailed Step with technique"],
-                  "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", 
-                  "monetization": "Explain buying brands list for $5 to fund my Jaguar E-Type."
+                  "clinical_analysis": "Minimum 8 full sentences. Deep medical dive into texture, barrier status, and vascular patterns.",
+                  "clinical_protocol": [ {{"name": "...", "description": "3 detailed sentences"}} ],
+                  "home_weapons": [ {{"name": "...", "explanation": "3 detailed sentences", "safety_warning": "..."}} ],
+                  "morning_routine": ["Step 1 with technique", "Step 2 with technique", "Step 3 with technique"],
+                  "evening_routine": ["Step 1 with technique", "Step 2 with technique", "Step 3 with technique"],
+                  "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", "monetization": "..."
                 }}
                 """
                 response = client.chat.completions.create(
