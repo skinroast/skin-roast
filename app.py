@@ -16,7 +16,7 @@ else:
 UPSELL_URL = "https://skin-roast.lemonsqueezy.com/upsell"
 PATREON_LINK = "https://www.patreon.com/your_link_here"
 
-# --- 2. МЕДИЦИНСКАЯ МАТРИЦА ---
+# --- 2. LOGIC MATRIX ---
 TREATMENT_LOGIC = {
     "Acne / Pimples": {"ingredients": "Salicylic Acid, Zinc, Niacinamide", "procedures": "Professional Deep Cleaning, IPL Therapy, Chemical Peels"},
     "Wrinkles / Aging": {"ingredients": "Retinol (Vitamin A), Peptides, Vitamin C", "procedures": "Botox Injections, RF-Lifting, Biorevitalization"},
@@ -26,7 +26,7 @@ TREATMENT_LOGIC = {
     "Post-Acne / Scars": {"ingredients": "Vitamin C, Azelaic Acid, AHA (Glycolic)", "procedures": "Microneedling (Dermapen), Laser Resurfacing, Medium Peels"}
 }
 
-# --- 3. ГЕНЕРАТОР PDF ---
+# --- 3. UTILS ---
 def clean_text(text):
     if isinstance(text, str):
         replacements = {'\u2018': "'", '\u2019': "'", '\u201c': '"', '\u201d': '"', '\u2013': '-', '\u2014': '-'}
@@ -39,44 +39,64 @@ def create_premium_pdf(data):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # PAGE 1: ANALYSIS & ROAST
+    # PAGE 1: ROAST & PHOTO ANALYSIS
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 22)
     pdf.cell(0, 15, clean_text(data.get('header', 'Skin Audit')).upper(), ln=True, align='C')
     pdf.ln(5)
     
-    # 1. ROAST
     pdf.set_font("Helvetica", 'B', 14); pdf.set_text_color(200, 0, 0)
     pdf.cell(0, 10, "1. THE REALITY CHECK (VIBE CHECK):", ln=True)
     pdf.set_font("Helvetica", 'I', 11); pdf.set_text_color(0, 0, 0)
     pdf.multi_cell(0, 7, txt=clean_text(data.get('roast', '')))
     pdf.ln(5); pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(5)
 
-    # 2. ANALYSIS
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "2. CLINICAL PHOTO-ANALYSIS:", ln=True)
     pdf.set_font("Helvetica", size=11)
     pdf.multi_cell(0, 7, txt=clean_text(data.get('clinical_analysis', '')))
     pdf.ln(5)
 
-    # 3. HIDDEN FINDINGS
     pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Helvetica", 'B', 12)
     pdf.cell(0, 10, "3. HIDDEN FINDINGS (DETECTED BY AI):", ln=True, fill=True)
     pdf.set_font("Helvetica", 'I', 11)
     pdf.multi_cell(0, 7, txt=clean_text(data.get('hidden_findings', '')))
-    
-    # Дальше идут остальные страницы... (3. CLINICAL PROTOCOL и т.д.)
-    # PAGE 4: FINAL WORD
+
+    # PAGE 2: PROCEDURES & ACTIVES
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 15, "FINAL WORD FROM THE COACH", ln=True, align='C')
+    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "4. CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
+    for proc in data.get('clinical_protocol', []):
+        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[*] {clean_text(proc.get('name'))}", ln=True)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc.get('description'))); pdf.ln(4)
+
+    pdf.ln(5); pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. YOUR HOME WEAPONS (ACTIVES)", ln=True)
+    for weapon in data.get('home_weapons', []):
+        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon.get('name'))}", ln=True)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon.get('explanation')))
+        pdf.set_font("Helvetica", 'B', 9); pdf.set_text_color(150, 0, 0)
+        pdf.multi_cell(0, 5, txt=f"WARNING: {clean_text(weapon.get('safety_warning'))}")
+        pdf.set_text_color(0, 0, 0); pdf.ln(4)
+
+    # PAGE 3: ROUTINE (BORDERED)
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "6. THE SEALING PROTOCOL (DAILY OPS)", ln=True, align='C')
+    pdf.set_line_width(0.5); pdf.rect(10, 30, 190, 170)
+    pdf.set_xy(15, 35)
+    pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
+    for step in data.get('morning_routine', []):
+        pdf.set_x(15); pdf.set_font("Helvetica", size=10); pdf.multi_cell(180, 7, txt=f"- {clean_text(step)}"); pdf.ln(3)
+    pdf.ln(5); pdf.set_x(15); pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "EVENING / PM OPERATION:", ln=True)
+    for step in data.get('evening_routine', []):
+        pdf.set_x(15); pdf.set_font("Helvetica", size=10); pdf.multi_cell(180, 7, txt=f"- {clean_text(step)}"); pdf.ln(3)
+
+    # PAGE 4: FINAL
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 15, "FINAL WORD", ln=True, align='C')
     pdf.set_font("Helvetica", 'I', 12); pdf.multi_cell(0, 8, txt=clean_text(data.get('final_joke', '')), align='C')
-    pdf.ln(10); pdf.set_text_color(200, 0, 0); pdf.set_font("Helvetica", 'B', 12)
-    pdf.multi_cell(0, 7, txt=clean_text(data.get('monetization', '')), align='C')
+    pdf.ln(10); pdf.set_text_color(200, 0, 0); pdf.set_font("Helvetica", 'B', 12); pdf.multi_cell(0, 7, txt=clean_text(data.get('monetization', '')), align='C')
     pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_URL)
-    pdf.ln(10); pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", 'B', 10); pdf.cell(0, 10, "SAFETY DISCLAIMER:", ln=True)
-    pdf.set_font("Helvetica", size=8); pdf.multi_cell(0, 4, txt=clean_text(data.get('safety_disclaimer', '')))
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 10); pdf.cell(0, 10, "MEDICAL NOTICE:", ln=True)
+    pdf.ln(10); pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", 'B', 10); pdf.cell(0, 10, "AI ACCURACY NOTICE:", ln=True)
     pdf.set_font("Helvetica", size=8); pdf.multi_cell(0, 4, txt=clean_text(data.get('medical_notice', '')))
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -87,87 +107,44 @@ query_params = st.query_params
 access_granted = query_params.get("paid") == "true"
 
 if not access_granted:
-    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem;">⚠️ HONEST WARNING: Saving for a Jaguar E-Type. $10 analysis helps the dream.</div>', unsafe_allow_html=True)
-    st.markdown('<h1 style="text-align: center; background: -webkit-linear-gradient(45deg, #FF4B2B, #FF416C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem;">YOUR MIRROR LIES.<br>AI DOESN\'T.</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="text-align: center;">YOUR MIRROR LIES. AI DOESN\'T.</h1>', unsafe_allow_html=True)
     st.link_button("👉 UNLOCK MY ROAST ($10)", PATREON_LINK, type="primary", use_container_width=True)
 else:
     st.title("🔥 Skin Roast AI")
-    with st.form(key="main_roast_form"):
-        u_name = st.text_input("First Name")
-        u_age = st.selectbox("Age Group", ["18-24", "25-34", "35-44", "45-54", "55+"])
-        u_enemy = st.selectbox("Main Complaint", list(TREATMENT_LOGIC.keys()))
-        u_routine = st.selectbox("Current Operations", ["Water only", "Bar Soap", "Basic Moisturizer", "Full Protocol"])
-        u_sins = st.multiselect("Lifestyle Sins", ["Smoking", "Alcohol", "Sugar", "No SPF", "No Sleep"])
-        u_file = st.file_uploader("Upload Selfie", type=['jpg', 'png', 'jpeg'])
-        submit = st.form_submit_button("GENERATE PREMIUM REPORT")
+    with st.form(key="final_roast_form"):
+        u_name = st.text_input("Name")
+        u_age = st.selectbox("Age", ["18-24", "25-34", "35-44", "45-54", "55+"])
+        u_enemy = st.selectbox("Complaint", list(TREATMENT_LOGIC.keys()))
+        u_routine = st.selectbox("Routine", ["Water only", "Bar Soap", "Basic", "Full Protocol"])
+        u_sins = st.multiselect("Sins", ["Smoking", "Alcohol", "Sugar", "No SPF", "No Sleep"])
+        u_file = st.file_uploader("Selfie", type=['jpg', 'png', 'jpeg'])
+        submit = st.form_submit_button("GENERATE REPORT")
 
     if submit and u_file and u_name:
-        with st.spinner("Executing clinical scan..."):
+        with st.spinner("Analyzing..."):
             try:
-                # 1. Подготовка данных
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
-                
-                # 2. Промпт (ровные отступы крайне важны здесь)
-                raw_prompt = """
-                You are a cynical, elite clinical dermatologist. Your vibe: Dr. House meets a Stand-up Roast. 
-                Generate a premium 4-page report in JSON for {name}, age {age}.
-                Current routine: {routine}. Lifestyle sins: {sins}. Focus on {enemy}.
-                
-                STRICT CONTENT RULES:
-                1. THE REALITY CHECK: Brutal, cinematic 6-8 sentence roast. Use a dark metaphor for {sins}. No sugar-coating.
-                2. CLINICAL ANALYSIS (PHOTO-BASED): 12-15 sentences. Deep-dive into epidermal atrophy and collagen destruction. Link their sins directly to what you see on the photo.
-                3. HIDDEN FINDINGS: Find 3 sneaky issues NOT mentioned by the user. Be specific.
-                4. CLINICAL PROTOCOL: 3 procedures from: {proc_list}. 4 sentences for each.
-                5. HOME WEAPONS: 3 actives from: {ing_list}. 3 sentences + RED warning for each.
-                6. DETAILED ROUTINE: Every step MUST have 3-4 sentences of specific technique (massage, wait times).
-                7. MONETIZATION: Cynical pitch about the $5 list for your Jaguar E-Type V12 fund.
+                prompt = (
+                    "Cynical dermatologist AI (Dr. House style). User: {n}, Age: {a}, Sins: {s}, Logic: {l}. "
+                    "Analyze the photo deeply. Return JSON: "
+                    "{{ \"header\": \"...\", \"roast\": \"Brutal 8-sentence roast\", \"clinical_analysis\": \"15-sentence deep dive based on photo markers\", "
+                    "\"hidden_findings\": \"3 specific issues found on photo\", \"clinical_protocol\": [ {{ \"name\": \"...\", \"description\": \"4 sentences\" }} ], "
+                    "\"home_weapons\": [ {{ \"name\": \"...\", \"explanation\": \"3 sentences\", \"safety_warning\": \"...\" }} ], "
+                    "\"morning_routine\": [\"Step with technique\"], \"evening_routine\": [\"Step with technique\"], "
+                    "\"final_joke\": \"...\", \"monetization\": \"Jaguar pitch\", \"medical_notice\": \"AI accuracy notice...\" }}"
+                ).format(n=u_name, a=u_age, s=u_sins, l=logic)
 
-                STRICT JSON STRUCTURE:
-                {{
-                  "header": "ULTIMATE DERMAL AUDIT: {name}",
-                  "roast": "Actual dark roast here", 
-                  "clinical_analysis": "Long medical deep-dive",
-                  "hidden_findings": "Detailed hidden issues",
-                  "clinical_protocol": [ {{ "name": "...", "description": "..." }} ],
-                  "home_weapons": [ {{ "name": "...", "explanation": "...", "safety_warning": "..." }} ],
-                  "morning_routine": ["Step with technique", "Step...", "Step..."],
-                  "evening_routine": ["Step with technique", "Step...", "Step..."],
-                  "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", "monetization": "..."
-                }}
-                """
-                
-                mega_prompt = raw_prompt.format(
-                    name=u_name, 
-                    age=u_age, 
-                    routine=u_routine, 
-                    sins=u_sins, 
-                    enemy=u_enemy, 
-                    proc_list=logic['procedures'], 
-                    ing_list=logic['ingredients']
-                )
-
-                # 3. Запрос к API
                 response = client.chat.completions.create(
-                    model="gpt-4o", 
-                    response_format={ "type": "json_object" },
+                    model="gpt-4o", response_format={ "type": "json_object" },
                     messages=[
-                        {"role": "system", "content": mega_prompt},
-                        {"role": "user", "content": [
-                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
-                        ]}
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}]}
                     ]
                 )
-                
-                raw_content = response.choices[0].message.content
-                
-                if not raw_content:
-                    st.error("AI returned an empty response. Try again.")
-                else:
-                    report_data = json.loads(raw_content)
-                    pdf_path = create_premium_pdf(report_data)
-                    with open(pdf_path, "rb") as f:
-                        st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{u_name}.pdf")
-            
+                report_data = json.loads(response.choices[0].message.content)
+                pdf_path = create_premium_pdf(report_data)
+                with open(pdf_path, "rb") as f:
+                    st.download_button("⬇️ DOWNLOAD 4-PAGE REPORT", f, file_name=f"SkinRoast_{u_name}.pdf")
             except Exception as e:
-                st.error(f"Critical Error: {e}")
+                st.error(f"Error: {e}")
