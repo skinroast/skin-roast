@@ -108,21 +108,19 @@ else:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-                # 2. Промпт с усиленным анализом фото и скрытыми находками
-              raw_prompt = """
+                # 2. Промпт (ровные отступы крайне важны здесь)
+                raw_prompt = """
                 You are a cynical, elite clinical dermatologist. Your vibe: Dr. House meets a Stand-up Roast. 
                 Generate a premium 4-page report in JSON for {name}, age {age}.
                 Current routine: {routine}. Lifestyle sins: {sins}. Focus on {enemy}.
                 
                 STRICT CONTENT RULES:
-                1. THE REALITY CHECK: Brutal, cinematic 6-8 sentence roast. Use a dark metaphor for {sins}. 
-                   Treat their skin like a "crime scene" or a "crumbling architectural disaster". No sugar-coating.
-                2. CLINICAL ANALYSIS: 12-15 sentences. Deep-dive into epidermal atrophy and collagen destruction. 
-                   Link their sins directly to what you see on the photo (e.g., "I see the sugar crystals screaming in your dermal matrix").
+                1. THE REALITY CHECK: Brutal, cinematic 6-8 sentence roast. Use a dark metaphor for {sins}. No sugar-coating.
+                2. CLINICAL ANALYSIS (PHOTO-BASED): 12-15 sentences. Deep-dive into epidermal atrophy and collagen destruction. Link their sins directly to what you see on the photo.
                 3. HIDDEN FINDINGS: Find 3 sneaky issues NOT mentioned by the user. Be specific.
-                4. CLINICAL PROTOCOL: 3 procedures from: {proc_list}. 4 sentences for each on cellular mechanism.
+                4. CLINICAL PROTOCOL: 3 procedures from: {proc_list}. 4 sentences for each.
                 5. HOME WEAPONS: 3 actives from: {ing_list}. 3 sentences + RED warning for each.
-                6. DETAILED ROUTINE: Every step MUST have 3-4 sentences of specific technique (massage, angles, wait times).
+                6. DETAILED ROUTINE: Every step MUST have 3-4 sentences of specific technique (massage, wait times).
                 7. MONETIZATION: Cynical pitch about the $5 list for your Jaguar E-Type V12 fund.
 
                 STRICT JSON STRUCTURE:
@@ -138,6 +136,7 @@ else:
                   "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", "monetization": "..."
                 }}
                 """
+                
                 mega_prompt = raw_prompt.format(
                     name=u_name, 
                     age=u_age, 
@@ -162,7 +161,6 @@ else:
                 
                 raw_content = response.choices[0].message.content
                 
-                # 4. Проверка и генерация PDF
                 if not raw_content:
                     st.error("AI returned an empty response. Try again.")
                 else:
@@ -172,5 +170,4 @@ else:
                         st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{u_name}.pdf")
             
             except Exception as e:
-                # Этот блок теперь стоит строго под 'try'
                 st.error(f"Critical Error: {e}")
