@@ -5,7 +5,7 @@ import tempfile
 import json
 import base64
 
-# --- 1. CONFIG ---
+# --- 1. CONFIGURATION ---
 st.set_page_config(page_title="Skin Roast AI", page_icon="🔥", layout="centered")
 
 if "OPENAI_API_KEY" in st.secrets:
@@ -16,13 +16,13 @@ else:
 UPSELL_URL = "https://skin-roast.lemonsqueezy.com/upsell"
 PATREON_LINK = "https://www.patreon.com/your_link_here" 
 
-# --- 2. МЕДИЦИНСКАЯ МАТРИЦА ---
+# --- 2. MEDICAL LOGIC MATRIX ---
 TREATMENT_LOGIC = {
     "Acne / Pimples": {"ingredients": "Salicylic Acid, Zinc, Niacinamide", "procedures": "Professional Deep Cleaning, IPL Therapy, Chemical Peels"},
     "Wrinkles / Aging": {"ingredients": "Retinol (Vitamin A), Peptides, Vitamin C", "procedures": "Botox Injections, RF-Lifting, Biorevitalization"},
-    "Eye Bags / Tired": {"ingredients": "Caffeine, Green Tea Extract, Hyaluronic Acid", "procedures": "Microcurrent Therapy, Lymphatic Drainage"},
-    "Redness": {"ingredients": "Centella Asiatica (Cica), Azelaic Acid, Ceramides", "procedures": "BBL Phototherapy, Soothing Mask"},
-    "Large Pores": {"ingredients": "Retinoids, BHA (Salicylic Acid), Niacinamide", "procedures": "Fractional Laser, Carbon Peel"},
+    "Eye Bags / Tired": {"ingredients": "Caffeine, Green Tea Extract, Hyaluronic Acid", "procedures": "Microcurrent Therapy, Lymphatic Drainage, Eye Peels"},
+    "Redness": {"ingredients": "Centella Asiatica (Cica), Azelaic Acid, Ceramides", "procedures": "BBL Phototherapy, Soothing Mask, Laser for capillaries"},
+    "Large Pores": {"ingredients": "Retinoids, BHA (Salicylic Acid), Niacinamide", "procedures": "Fractional Laser, Carbon Peel, Microneedling"},
     "Post-Acne / Scars": {"ingredients": "Vitamin C, Azelaic Acid, AHA (Glycolic)", "procedures": "Microneedling (Dermapen), Laser Resurfacing, Medium Peels"}
 }
 
@@ -39,7 +39,7 @@ def create_premium_pdf(data):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # PAGE 1: ANALYSIS & REALITY CHECK
+    # PAGE 1: ANALYSIS
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 22)
     pdf.cell(0, 15, clean_text(data['header']).upper(), ln=True, align='C')
@@ -51,7 +51,7 @@ def create_premium_pdf(data):
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "2. CLINICAL ANALYSIS:", ln=True)
     pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data['clinical_analysis']))
 
-    # PAGE 2: CLINICAL STRATEGY
+    # PAGE 2: PROCEDURES & ACTIVES
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "3. CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
     for proc in data['clinical_protocol']:
@@ -66,19 +66,19 @@ def create_premium_pdf(data):
         pdf.multi_cell(0, 5, txt=f"WARNING: {clean_text(weapon['safety_warning'])}")
         pdf.set_text_color(0, 0, 0); pdf.ln(2)
 
-    # PAGE 3: DAILY OPERATIONS
+    # PAGE 3: ROUTINE
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. DAILY OPERATIONS: SEALING PROTOCOL", ln=True, align='C')
+    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. THE SEALING PROTOCOL (DAILY OPERATIONS)", ln=True, align='C')
     
     pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
     for step in data['morning_routine']:
-        pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=f"- {clean_text(step)}"); pdf.ln(2)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
 
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "EVENING / PM OPERATION:", ln=True)
     for step in data['evening_routine']:
-        pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=f"- {clean_text(step)}"); pdf.ln(2)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
 
-    # PAGE 4: FINAL WORD & DISCLAIMERS
+    # PAGE 4: FINAL & DISCLAIMERS
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 15, "FINAL WORD FROM THE COACH", ln=True, align='C')
     pdf.set_font("Helvetica", 'I', 12); pdf.multi_cell(0, 8, txt=clean_text(data['final_joke']), align='C')
@@ -89,12 +89,10 @@ def create_premium_pdf(data):
 
     pdf.ln(10); pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", 'B', 10)
     pdf.cell(0, 10, "SAFETY DISCLAIMER:", ln=True)
-    pdf.set_font("Helvetica", size=8)
-    pdf.multi_cell(0, 4, txt=clean_text(data['safety_disclaimer']))
+    pdf.set_font("Helvetica", size=8); pdf.multi_cell(0, 4, txt=clean_text(data['safety_disclaimer']))
     
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 10); pdf.cell(0, 10, "MEDICAL NOTICE:", ln=True)
-    pdf.set_font("Helvetica", size=8)
-    pdf.multi_cell(0, 4, txt=clean_text(data['medical_notice']))
+    pdf.set_font("Helvetica", size=8); pdf.multi_cell(0, 4, txt=clean_text(data['medical_notice']))
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         pdf.output(tmp.name); return tmp.name
@@ -105,10 +103,8 @@ access_granted = query_params.get("paid") == "true"
 
 if not access_granted:
     st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px;">⚠️ <b>HONEST WARNING:</b> Saving for a Jaguar E-Type. $10 analysis helps the dream.</div>', unsafe_allow_html=True)
-    try:
-        st.image("scan_face.png", use_column_width=True)
-    except:
-        st.info("🖼 scan_face.png missing.")
+    try: st.image("scan_face.png", use_column_width=True)
+    except: st.info("🖼 scan_face.png missing.")
     st.markdown('<h1 style="text-align: center; background: -webkit-linear-gradient(45deg, #FF4B2B, #FF416C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem;">YOUR MIRROR LIES.<br>AI DOESN\'T.</h1>', unsafe_allow_html=True)
     st.link_button("👉 UNLOCK MY ROAST ($10)", PATREON_LINK, type="primary", use_container_width=True)
 else:
@@ -124,43 +120,40 @@ else:
     if submit and u_file and u_name:
         with st.spinner("Executing clinical scan..."):
             try:
-                base_4_img = base64.b64encode(u_file.read()).decode('utf-8')
+                base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
                 mega_prompt = f"""
                 You are a world-class clinical dermatologist and a witty 'Bro-Coach'. 
-                Generate a 4-page premium report in JSON for {u_name}, age {u_age}.
+                Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
                 
+                STRICT CONTENT RULES:
+                - CLINICAL PROTOCOL: List EXACTLY 3 procedures from the list: {logic['procedures']}. Each must have 3 detailed sentences.
+                - HOME WEAPONS: List EXACTLY 3 active ingredients from: {logic['ingredients']}. Each must have 3 sentences on molecular action AND a specific 'Safety Warning' regarding SPF/irritation.
+                - ROUTINE: Describe Morning and Evening routines separately and IN DETAIL. 
+                  Example step: "Cleanse: Warm water, emulsify 2 pumps of cleanser in palms, massage for 60s, focus on nose, rinse 10 times."
+                - MONETIZATION: Explain that they can hunt for products for free OR buy our brands list for $5 to help fund my Jaguar E-Type dream.
+
                 STRICT JSON STRUCTURE:
                 {{
                   "header": "Skin Upgrade Protocol for {u_name}",
-                  "roast": "4-5 sentences of 'Sandwich Roast'. Respect -> sharp metaphor about {u_sins} -> support. No cheap insults.",
-                  "clinical_analysis": "Minimum 8 sentences. Deep photo analysis: texture, barrier, type. Serious tone.",
-                  "hidden_findings": "2-3 additional issues found besides {u_enemy}.",
-                  "clinical_protocol": [
-                    {{"name": "Procedure", "description": "3 sentences on action and result."}}
-                  ],
-                  "home_weapons": [
-                    {{
-                      "name": "Active Ingredient", 
-                      "explanation": "3 sentences on molecular action.",
-                      "safety_warning": "CRITICAL: SPF requirement or patch test instruction."
-                    }}
-                  ],
-                  "morning_routine": ["Step 1 with technique", "Step 2 with technique", "Step 3 (Sealing)"],
-                  "evening_routine": ["Step 1 with technique", "Step 2 with technique", "Step 3 (Sealing)"],
-                  "safety_disclaimer": "Detailed notice on actives: start slow, patch test, and necessity of SPF.",
-                  "medical_notice": "Legal notice: Informational only, consult a doctor.",
+                  "roast": "4-5 sentences of 'Sandwich Roast' (Respect -> sharp cinematic metaphor about {u_sins} -> support).",
+                  "clinical_analysis": "Minimum 8 sentences. Deep photo analysis of texture, barrier, and vascular patterns.",
+                  "clinical_protocol": [ {{"name": "Procedure", "description": "3 sentences"}}, {{"name": "...", "description": "..."}}, {{"name": "...", "description": "..."}} ],
+                  "home_weapons": [ {{"name": "Active", "explanation": "3 sentences", "safety_warning": "Warning"}}, {{"name": "...", "explanation": "...", "safety_warning": "..."}}, {{"name": "...", "explanation": "...", "safety_warning": "..."}} ],
+                  "morning_routine": ["Detailed Step 1", "Detailed Step 2", "Detailed Step 3"],
+                  "evening_routine": ["Detailed Step 1", "Detailed Step 2", "Detailed Step 3"],
+                  "safety_disclaimer": "Detailed notice on actives.",
+                  "medical_notice": "Full legal notice.",
                   "final_joke": "Inspiring cynical joke about success.",
-                  "monetization": "Buy our list for $5 to fund my Jaguar."
+                  "monetization": "Jaguar fund message."
                 }}
-                Use logic: {logic['ingredients']} and {logic['procedures']}.
                 """
 
                 response = client.chat.completions.create(
                     model="gpt-4o", response_format={ "type": "json_object" },
                     messages=[{"role": "system", "content": mega_prompt},
-                              {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base_4_img}"}}]}]
+                              {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}]}]
                 )
                 
                 report_data = json.loads(response.choices[0].message.content)
