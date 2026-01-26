@@ -35,68 +35,15 @@ def clean_text(text):
         return text.encode('ascii', 'ignore').decode('ascii')
     return str(text)
 
-def create_premium_pdf(data):
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    
-    # PAGE 1: ANALYSIS
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 22)
-    pdf.cell(0, 15, clean_text(data['header']).upper(), ln=True, align='C')
-    pdf.ln(5)
-    
-    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "1. THE REALITY CHECK (VIBE CHECK):", ln=True)
-    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data['roast']))
-
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "2. CLINICAL ANALYSIS:", ln=True)
-    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data['clinical_analysis']))
-
-    # PAGE 2: PROCEDURES & ACTIVES
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "3. CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
-    for proc in data['clinical_protocol']:
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[*] {clean_text(proc['name'])}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc['description'])); pdf.ln(2)
-
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "4. YOUR HOME WEAPONS (ACTIVES)", ln=True)
-    for weapon in data['home_weapons']:
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon['name'])}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon['explanation']))
-        pdf.set_font("Helvetica", 'B', 9); pdf.set_text_color(150, 0, 0)
-        pdf.multi_cell(0, 5, txt=f"WARNING: {clean_text(weapon['safety_warning'])}")
-        pdf.set_text_color(0, 0, 0); pdf.ln(2)
-
-    # PAGE 3: ROUTINE
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. THE SEALING PROTOCOL (DAILY OPERATIONS)", ln=True, align='C')
-    
-    pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
-    for step in data['morning_routine']:
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
-
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "EVENING / PM OPERATION:", ln=True)
-    for step in data['evening_routine']:
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
-
-    # PAGE 4: FINAL & DISCLAIMERS
-    pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 15, "FINAL WORD FROM THE COACH", ln=True, align='C')
-    pdf.set_font("Helvetica", 'I', 12); pdf.multi_cell(0, 8, txt=clean_text(data['final_joke']), align='C')
-
-    pdf.ln(10); pdf.set_text_color(200, 0, 0); pdf.set_font("Helvetica", 'B', 12)
-    pdf.multi_cell(0, 7, txt=clean_text(data['monetization']), align='C')
-    pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_URL)
-
-    pdf.ln(10); pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", 'B', 10)
-    pdf.cell(0, 10, "SAFETY DISCLAIMER:", ln=True)
-    pdf.set_font("Helvetica", size=8); pdf.multi_cell(0, 4, txt=clean_text(data['safety_disclaimer']))
-    
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 10); pdf.cell(0, 10, "MEDICAL NOTICE:", ln=True)
-    pdf.set_font("Helvetica", size=8); pdf.multi_cell(0, 4, txt=clean_text(data['medical_notice']))
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        pdf.output(tmp.name); return tmp.name
-
+with st.form("roast_logic"):
+        u_name = st.text_input("First Name")
+        u_age = st.selectbox("Age Group", ["18-24", "25-34", "35-44", "45-54", "55+"])
+        u_enemy = st.selectbox("Main Complaint", list(TREATMENT_LOGIC.keys()))
+        # ВОЗВРАЩАЕМ ПУНКТ ПРО ТЕКУЩУЮ РУТИНУ
+        u_routine = st.selectbox("Current Operations", ["Water only", "Bar Soap", "Basic Moisturizer", "Full Protocol"])
+        u_sins = st.multiselect("Lifestyle Sins", ["Smoking", "Alcohol", "Sugar", "No SPF", "No Sleep"])
+        u_file = st.file_uploader("Upload Selfie", type=['jpg', 'png', 'jpeg'])
+        submit = st.form_submit_button("GENERATE PREMIUM REPORT")
 # --- 4. UI ---
 query_params = st.query_params
 access_granted = query_params.get("paid") == "true"
@@ -113,6 +60,8 @@ else:
         u_name = st.text_input("First Name")
         u_age = st.selectbox("Age Group", ["18-24", "25-34", "35-44", "45-54", "55+"])
         u_enemy = st.selectbox("Main Complaint", list(TREATMENT_LOGIC.keys()))
+        # ВОЗВРАЩАЕМ ПУНКТ ПРО ТЕКУЩУЮ РУТИНУ
+        u_routine = st.selectbox("Current Operations", ["Water only", "Bar Soap", "Basic Moisturizer", "Full Protocol"])
         u_sins = st.multiselect("Lifestyle Sins", ["Smoking", "Alcohol", "Sugar", "No SPF", "No Sleep"])
         u_file = st.file_uploader("Upload Selfie", type=['jpg', 'png', 'jpeg'])
         submit = st.form_submit_button("GENERATE PREMIUM REPORT")
