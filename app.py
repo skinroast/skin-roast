@@ -18,12 +18,12 @@ PATREON_LINK = "https://www.patreon.com/your_link_here"
 
 # --- 2. МЕДИЦИНСКАЯ МАТРИЦА ---
 TREATMENT_LOGIC = {
-    "Acne / Pimples": {"ingredients": "Salicylic Acid, Zinc, Niacinamide", "procedures": "Chemical Peels, IPL Therapy"},
-    "Wrinkles / Aging": {"ingredients": "Retinol, Peptides, Vitamin C", "procedures": "Botox, RF-Lifting"},
-    "Eye Bags / Tired": {"ingredients": "Caffeine, Green Tea, Hyaluronic Acid", "procedures": "Microcurrents, Lymphatic Massage"},
-    "Redness": {"ingredients": "Cica, Azelaic Acid, Ceramides", "procedures": "BBL Phototherapy"},
-    "Large Pores": {"ingredients": "Retinoids, BHA", "procedures": "Fractional Laser, Peels"},
-    "Post-Acne / Scars": {"ingredients": "Vitamin C, Azelaic Acid, AHA", "procedures": "Microneedling, Laser Resurfacing"}
+    "Acne / Pimples": {"ingredients": "Salicylic Acid, Zinc, Niacinamide", "procedures": "Professional Deep Cleaning, IPL Therapy, Chemical Peels"},
+    "Wrinkles / Aging": {"ingredients": "Retinol (Vitamin A), Peptides, Vitamin C", "procedures": "Botox Injections, RF-Lifting, Biorevitalization"},
+    "Eye Bags / Tired": {"ingredients": "Caffeine, Green Tea Extract, Hyaluronic Acid", "procedures": "Microcurrent Therapy, Lymphatic Drainage"},
+    "Redness": {"ingredients": "Centella Asiatica (Cica), Azelaic Acid, Ceramides", "procedures": "BBL Phototherapy, Soothing Mask"},
+    "Large Pores": {"ingredients": "Retinoids, BHA (Salicylic Acid), Niacinamide", "procedures": "Fractional Laser, Carbon Peel"},
+    "Post-Acne / Scars": {"ingredients": "Vitamin C, Azelaic Acid, AHA (Glycolic)", "procedures": "Microneedling (Dermapen), Laser Resurfacing, Medium Peels"}
 }
 
 # --- 3. ГЕНЕРАТОР PDF ---
@@ -39,7 +39,17 @@ def create_premium_pdf(data):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # ... (Первая страница с анализом остается прежней)
+    # PAGE 1: ANALYSIS & REALITY CHECK
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 22)
+    pdf.cell(0, 15, clean_text(data['header']).upper(), ln=True, align='C')
+    pdf.ln(5)
+    
+    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "1. THE REALITY CHECK (VIBE CHECK):", ln=True)
+    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data['roast']))
+
+    pdf.ln(5); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "2. CLINICAL ANALYSIS:", ln=True)
+    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data['clinical_analysis']))
 
     # PAGE 2: CLINICAL STRATEGY
     pdf.add_page()
@@ -52,25 +62,40 @@ def create_premium_pdf(data):
     for weapon in data['home_weapons']:
         pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon['name'])}", ln=True)
         pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon['explanation']))
-        # ВАРНИНГ К АКТИВУ
         pdf.set_font("Helvetica", 'B', 9); pdf.set_text_color(150, 0, 0)
         pdf.multi_cell(0, 5, txt=f"WARNING: {clean_text(weapon['safety_warning'])}")
         pdf.set_text_color(0, 0, 0); pdf.ln(2)
 
-    # PAGE 3: ROUTINE (Утро и Вечер теперь разделены визуально)
+    # PAGE 3: DAILY OPERATIONS
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. THE SEALING PROTOCOL (DAILY OPS)", ln=True, align='C')
+    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. DAILY OPERATIONS: SEALING PROTOCOL", ln=True, align='C')
     
     pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
     for step in data['morning_routine']:
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
+        pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=f"- {clean_text(step)}"); pdf.ln(2)
 
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "EVENING / PM OPERATION:", ln=True)
     for step in data['evening_routine']:
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
+        pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=f"- {clean_text(step)}"); pdf.ln(2)
 
-    # ... (Остальное: Финальное слово и дисклеймеры)
-    return pdf
+    # PAGE 4: FINAL WORD & DISCLAIMERS
+    pdf.add_page()
+    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 15, "FINAL WORD FROM THE COACH", ln=True, align='C')
+    pdf.set_font("Helvetica", 'I', 12); pdf.multi_cell(0, 8, txt=clean_text(data['final_joke']), align='C')
+
+    pdf.ln(10); pdf.set_text_color(200, 0, 0); pdf.set_font("Helvetica", 'B', 12)
+    pdf.multi_cell(0, 7, txt=clean_text(data['monetization']), align='C')
+    pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_URL)
+
+    pdf.ln(10); pdf.set_text_color(0, 0, 0); pdf.set_font("Helvetica", 'B', 10)
+    pdf.cell(0, 10, "SAFETY DISCLAIMER:", ln=True)
+    pdf.set_font("Helvetica", size=8)
+    pdf.multi_cell(0, 4, txt=clean_text(data['safety_disclaimer']))
+    
+    pdf.ln(5); pdf.set_font("Helvetica", 'B', 10); pdf.cell(0, 10, "MEDICAL NOTICE:", ln=True)
+    pdf.set_font("Helvetica", size=8)
+    pdf.multi_cell(0, 4, txt=clean_text(data['medical_notice']))
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         pdf.output(tmp.name); return tmp.name
 
@@ -79,7 +104,7 @@ query_params = st.query_params
 access_granted = query_params.get("paid") == "true"
 
 if not access_granted:
-    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px;">⚠️ <b>HONEST WARNING:</b> I am saving for a Jaguar E-Type. Your $10 helps the dream.</div>', unsafe_allow_html=True)
+    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px;">⚠️ <b>HONEST WARNING:</b> Saving for a Jaguar E-Type. $10 analysis helps the dream.</div>', unsafe_allow_html=True)
     try:
         st.image("scan_face.png", use_column_width=True)
     except:
@@ -92,56 +117,50 @@ else:
         u_name = st.text_input("First Name")
         u_age = st.selectbox("Age Group", ["18-24", "25-34", "35-44", "45-54", "55+"])
         u_enemy = st.selectbox("Main Complaint", list(TREATMENT_LOGIC.keys()))
-        u_sins = st.multiselect("Lifestyle Sins", ["Smoking", "No Sleep", "Sugar", "No SPF", "Stress"])
+        u_sins = st.multiselect("Lifestyle Sins", ["Smoking", "Alcohol", "Sugar", "No SPF", "No Sleep"])
         u_file = st.file_uploader("Upload Selfie", type=['jpg', 'png', 'jpeg'])
         submit = st.form_submit_button("GENERATE PREMIUM REPORT")
 
     if submit and u_file and u_name:
         with st.spinner("Executing clinical scan..."):
             try:
-                base64_img = base64.b64encode(u_file.read()).decode('utf-8')
+                base_4_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-               mega_prompt = f"""
-You are a top-tier clinical dermatologist and a witty 'Bro-Coach'. 
-Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
+                mega_prompt = f"""
+                You are a world-class clinical dermatologist and a witty 'Bro-Coach'. 
+                Generate a 4-page premium report in JSON for {u_name}, age {u_age}.
+                
+                STRICT JSON STRUCTURE:
+                {{
+                  "header": "Skin Upgrade Protocol for {u_name}",
+                  "roast": "4-5 sentences of 'Sandwich Roast'. Respect -> sharp metaphor about {u_sins} -> support. No cheap insults.",
+                  "clinical_analysis": "Minimum 8 sentences. Deep photo analysis: texture, barrier, type. Serious tone.",
+                  "hidden_findings": "2-3 additional issues found besides {u_enemy}.",
+                  "clinical_protocol": [
+                    {{"name": "Procedure", "description": "3 sentences on action and result."}}
+                  ],
+                  "home_weapons": [
+                    {{
+                      "name": "Active Ingredient", 
+                      "explanation": "3 sentences on molecular action.",
+                      "safety_warning": "CRITICAL: SPF requirement or patch test instruction."
+                    }}
+                  ],
+                  "morning_routine": ["Step 1 with technique", "Step 2 with technique", "Step 3 (Sealing)"],
+                  "evening_routine": ["Step 1 with technique", "Step 2 with technique", "Step 3 (Sealing)"],
+                  "safety_disclaimer": "Detailed notice on actives: start slow, patch test, and necessity of SPF.",
+                  "medical_notice": "Legal notice: Informational only, consult a doctor.",
+                  "final_joke": "Inspiring cynical joke about success.",
+                  "monetization": "Buy our list for $5 to fund my Jaguar."
+                }}
+                Use logic: {logic['ingredients']} and {logic['procedures']}.
+                """
 
-STRICT CONTENT RULES:
-1. THE VIBE CHECK: Use the 'Sandwich Roast' (Respect -> Sharp Metaphor -> Support). Avoid cheap insults.
-2. CLINICAL ANALYSIS: Min 8 sentences. Deep dive into photo texture, barrier, and vascular patterns. [cite: 4, 16]
-3. HOME WEAPONS (ACTIVES): For EVERY active ingredient, you MUST include a specific 'Safety Warning' (e.g., Vitamin C requires SPF to avoid spots, Retinol requires gradual introduction).
-4. SEALING PROTOCOL: Every serum must be locked with moisturizer to prevent evaporation. [cite: 165]
-5. DISCLAIMERS: You must provide TWO separate disclaimers: one for Medical/Legal and one for Active Ingredient Safety.
-
-STRICT JSON STRUCTURE:
-{{
-  "header": "Skin Upgrade Protocol for {u_name}",
-  "roast": "4-5 sentences.",
-  "clinical_analysis": "8+ sentences. Medical tone.",
-  "hidden_findings": "2-3 additional issues detected.",
-  "clinical_protocol": [
-    {{"name": "Procedure", "description": "3 sentences on action and result."}}
-  ],
-  "home_weapons": [
-    {{
-      "name": "Ingredient Name", 
-      "explanation": "3 sentences on molecular action.",
-      "safety_warning": "CRITICAL: Specific instruction on how not to ruin skin with this active (e.g. SPF requirement, patch test)."
-    }}
-  ],
-  "morning_routine": ["Detailed step with technique", "Sealing step with SPF"],
-  "evening_routine": ["Detailed step with technique", "Sealing step with barrier cream"],
-  "safety_disclaimer": "Detailed notice on actives: start slow, patch test, and the absolute necessity of SPF.",
-  "medical_notice": "Legal notice: Informational only, consult a doctor. ",
-  "final_joke": "Inspiring cynical joke.",
-  "monetization": "Buy our $5 list to help my Jaguar fund. [cite: 44, 47]"
-}}
-Use logic: {logic['ingredients']} and {logic['procedures']}.
-"""
                 response = client.chat.completions.create(
                     model="gpt-4o", response_format={ "type": "json_object" },
                     messages=[{"role": "system", "content": mega_prompt},
-                              {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}]}]
+                              {"role": "user", "content": [{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base_4_img}"}}]}]
                 )
                 
                 report_data = json.loads(response.choices[0].message.content)
