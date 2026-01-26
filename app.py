@@ -41,9 +41,11 @@ def create_premium_pdf(data):
     
     # PAGE 1: ANALYSIS & ROAST
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 22)
-    pdf.cell(0, 15, clean_text(data.get('header', 'Skin Report')).upper(), ln=True, align='C')
     pdf.ln(5)
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, "3. HIDDEN FINDINGS (BEYOND YOUR COMPLAINT):", ln=True)
+    pdf.set_font("Helvetica", 'I', 11)
+    pdf.multi_cell(0, 7, txt=clean_text(data.get('hidden_findings', 'No additional issues found.')))
     
     pdf.set_font("Helvetica", 'B', 14)
     pdf.cell(0, 10, "1. THE REALITY CHECK (VIBE CHECK):", ln=True)
