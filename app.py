@@ -75,12 +75,12 @@ def create_premium_pdf(data):
     pdf.set_xy(15, 45)
     pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
     for step in data.get('morning_routine', []):
-        pdf.set_x(15); pdf.set_font("Helvetica", size=10); pdf.multi_cell(180, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
+        pdf.set_x(15); pdf.set_font("Helvetica", size=10); pdf.multi_cell(180, 6, txt=f"- {clean_text(step)}"); pdf.ln(3)
 
     pdf.ln(5); pdf.set_x(15)
     pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "EVENING / PM OPERATION:", ln=True)
     for step in data.get('evening_routine', []):
-        pdf.set_x(15); pdf.set_font("Helvetica", size=10); pdf.multi_cell(180, 6, txt=f"- {clean_text(step)}"); pdf.ln(1)
+        pdf.set_x(15); pdf.set_font("Helvetica", size=10); pdf.multi_cell(180, 6, txt=f"- {clean_text(step)}"); pdf.ln(3)
 
     # PAGE 4: FINAL WORD
     pdf.add_page()
@@ -123,25 +123,34 @@ else:
             try:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
-                mega_prompt = f"""
-                You are a top-tier clinical dermatologist and witty coach. 
-                Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
-                User routine: {u_routine}. Focus on {u_enemy}.
+             mega_prompt = f"""
+                You are a cynical, world-class clinical dermatologist with a dark sense of humor (vibe: Dr. House). 
+                Your patient is {u_name}, age {u_age}. They are paying for a brutal truth, not a bedtime story.
                 
-                STRICT JSON STRUCTURE (No extra text!):
+                STRICT CONTENT RULES:
+                1. THE REALITY CHECK: Write 4-5 sentences of dark, sharp, cynical 'Bro Roast'. Use a specific dark metaphor about {u_sins}. No 'classic film' or 'star' crap. Be a professional fixer who is tired of seeing people ruin their faces.
+                2. CLINICAL ANALYSIS: Minimum 10 sentences. Use heavy medical terminology. Deep dive into epidermal barrier, sebaceous activity, and dermal remodeling needed for {u_enemy}.
+                3. CLINICAL PROTOCOL: EXACTLY 3 high-end procedures from {logic['procedures']}. For EACH, write 3 sentences on the physiological mechanism and why it is a 'must' to save this face.
+                4. HOME WEAPONS: EXACTLY 3 actives from {logic['ingredients']}. Describe molecular action and include a 'Brutal Safety Warning' (e.g. skin peeling, SPF necessity).
+                5. DETAILED ROUTINE (THE CORE): For EVERY step, you MUST write 2-3 sentences of technique. 
+                   Example: "Massage for 60s like you're trying to scrub a crime scene, focus on the T-zone, rinse with ice-cold water to shock the vessels."
+                6. THE SEALING PRINCIPLE: Explain why applying serum without a cream is a financial crime (Trans-Epidermal Water Loss).
+                
+                STRICT JSON STRUCTURE:
                 {{
                   "header": "Skin Upgrade Protocol for {u_name}",
-                  "roast": "4-5 sentences of Sandwich Roast about {u_sins}.",
-                  "clinical_analysis": "Minimum 8 full sentences. Deep photo dive.",
-                  "clinical_protocol": [ {{"name": "Procedure", "description": "3 sentences"}} ],
-                  "home_weapons": [ {{"name": "Active", "explanation": "3 sentences", "safety_warning": "RED notice"}} ],
-                  "morning_routine": ["Step 1 technique", "Step 2 technique"],
-                  "evening_routine": ["Step 1 technique", "Step 2 technique"],
-                  "safety_disclaimer": "Safety rules.",
+                  "roast": "Dark/Cynical Roast here",
+                  "clinical_analysis": "Long medical analysis here",
+                  "clinical_protocol": [ {{"name": "...", "description": "3 sentences"}} ],
+                  "home_weapons": [ {{"name": "...", "explanation": "3 sentences", "safety_warning": "..."}} ],
+                  "morning_routine": ["Step 1 with heavy technique", "Step 2 with technique", "Step 3 Sealing technique"],
+                  "evening_routine": ["Step 1 technique", "Step 2 technique", "Step 3 Sealing technique"],
+                  "safety_disclaimer": "Safety notice.",
                   "medical_notice": "Legal notice.",
-                  "final_joke": "Inspiring joke.",
-                  "monetization": "Jaguar fund message."
+                  "final_joke": "One final dark medical joke about death/Jaguar.",
+                  "monetization": "Jaguar E-Type pitch."
                 }}
+                """
                 Use logic: {logic['ingredients']} and {logic['procedures']}.
                 """
                 response = client.chat.completions.create(
