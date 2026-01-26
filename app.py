@@ -35,51 +35,63 @@ def clean_text(text):
             text = text.replace(char, rep)
         return text.encode('ascii', 'ignore').decode('ascii')
     return str(text)
-
 def create_premium_pdf(data):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # PAGE 1: DEEP ANALYSIS
+    # PAGE 1: ANALYSIS
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 20)
-    pdf.cell(0, 15, clean_text(data.get('header', 'Skin Analysis')), ln=True, align='C')
+    pdf.set_font("Helvetica", 'B', 22)
+    pdf.cell(0, 15, clean_text(data['header']).upper(), ln=True, align='C')
+    pdf.ln(5)
     
     pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "1. THE VIBE CHECK (ROAST):", ln=True)
-    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data.get('roast', '')))
+    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data['roast']))
 
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 10, "2. CLINICAL ANALYSIS:", ln=True)
-    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data.get('clinical_analysis', '')))
+    pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=clean_text(data['clinical_analysis']))
 
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "3. ADDITIONAL FINDINGS:", ln=True)
-    pdf.set_font("Helvetica", 'I', 11); pdf.multi_cell(0, 7, txt=clean_text(data.get('hidden_findings', '')))
-
-    # PAGE 2: PROCEDURES & ACTIVES
+    # PAGE 2: CLINICAL STRATEGY
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "4. CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
-    for proc in data.get('clinical_protocol', []):
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[*] {clean_text(proc.get('name', ''))}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc.get('description', ''))); pdf.ln(2)
+    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "3. CLINICAL PROTOCOL (PRO LEVEL)", ln=True)
+    for proc in data['clinical_protocol']:
+        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[*] {clean_text(proc['name'])}", ln=True)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc['description'])); pdf.ln(2)
 
-    pdf.ln(5); pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. YOUR HOME WEAPONS (ACTIVES)", ln=True)
-    for weapon in data.get('home_weapons', []):
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon.get('name', ''))}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon.get('explanation', ''))); pdf.ln(2)
+    pdf.ln(5); pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "4. YOUR HOME WEAPONS (ACTIVES)", ln=True)
+    for weapon in data['home_weapons']:
+        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon['name'])}", ln=True)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon['explanation'])); pdf.ln(2)
 
-    # PAGE 3: DETAILED ROUTINE
+    # PAGE 3: DAILY OPERATIONS (РУТИНА)
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "6. DETAILED ROUTINE (TECHNIQUE)", ln=True, align='C')
-    for step in data.get('detailed_routine', []):
-        pdf.set_font("Helvetica", size=11); pdf.multi_cell(0, 7, txt=f"- {clean_text(step)}"); pdf.ln(3)
+    pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. DETAILED ROUTINE: THE SEALING PROTOCOL", ln=True, align='C')
+    pdf.set_font("Helvetica", 'I', 10)
+    pdf.multi_cell(0, 5, txt="Note: Apply active serums first, wait 2-3 mins, then ALWAYS 'seal' with a moisturizer to prevent active evaporation.")
+    pdf.ln(5)
 
-    # PAGE 4: FINAL WORD
+    pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
+    pdf.set_font("Helvetica", size=11)
+    for step in data['detailed_routine']:
+        if "Morning" in step:
+            pdf.multi_cell(0, 7, txt=f"- {clean_text(step)}"); pdf.ln(2)
+
+    pdf.ln(5); pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "EVENING / PM OPERATION:", ln=True)
+    for step in data['detailed_routine']:
+        if "Evening" in step:
+            pdf.multi_cell(0, 7, txt=f"- {clean_text(step)}"); pdf.ln(2)
+
+    # PAGE 4: FINAL
     pdf.add_page()
-    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 15, "FINAL WORD", ln=True, align='C')
-    pdf.set_font("Helvetica", 'I', 12); pdf.multi_cell(0, 8, txt=clean_text(data.get('final_joke', '')), align='C')
-    pdf.ln(10); pdf.set_font("Helvetica", 'B', 11); pdf.set_text_color(200, 0, 0)
-    pdf.multi_cell(0, 7, txt=clean_text(data.get('monetization', '')), align='C')
-    pdf.ln(10); pdf.set_text_color(100, 100, 100); pdf.set_font("Helvetica", size=8)
-    pdf.multi_cell(0, 5, txt=clean_text(data.get('disclaimers', '')), align='C')
+    pdf.set_font("Helvetica", 'B', 14); pdf.cell(0, 15, "FINAL WORD FROM THE COACH", ln=True, align='C')
+    pdf.set_font("Helvetica", 'I', 12); pdf.multi_cell(0, 8, txt=clean_text(data['final_joke']), align='C')
+
+    pdf.ln(10); pdf.set_text_color(200, 0, 0); pdf.set_font("Helvetica", 'B', 12)
+    pdf.multi_cell(0, 7, txt=clean_text(data['monetization']), align='C')
+    pdf.cell(0, 10, ">>> GET THE SHOPPING LIST ($5) <<<", ln=True, align='C', link=UPSELL_URL)
+
+    pdf.ln(20); pdf.set_text_color(100, 100, 100); pdf.set_font("Helvetica", size=8)
+    pdf.multi_cell(0, 5, txt=clean_text(data['disclaimers']), align='C')
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         pdf.output(tmp.name); return tmp.name
@@ -106,37 +118,43 @@ else:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-                mega_prompt = f"""
-                You are a top-tier clinical dermatologist and a witty 'Bro-Coach' (vibe: Dr. House meets high-end fixer).
-                Create a 4-page premium skin report in JSON for {u_name}, age {u_age}.
-                
-                STRICT JSON STRUCTURE:
-                {{
-                  "header": "Skin Upgrade Protocol for {u_name}",
-                  "roast": "4-5 sentences of 'Sandwich Roast'. Start with respect for their vibe/hustle, then an ironic comparison about their {u_sins} (use metaphors like corporate burnout, tech-founder stress, or survival ops). End with support. No cheap insults.",
-                  "clinical_analysis": "Minimum 6 full sentences. High-level medical analysis of photo: identify skin type (oily, dry, aging), barrier function, and vascular patterns. Be professional and detailed.",
-                  "hidden_findings": "2-3 additional dermatological issues detected on photo besides {u_enemy}.",
-                  "clinical_protocol": [
-                    {{"name": "Procedure", "description": "3 detailed sentences on how it works and the clinical result."}},
-                    {{"name": "Procedure 2", "description": "3 detailed sentences on how it works and the clinical result."}}
-                  ],
-                  "home_weapons": [
-                    {{"name": "Ingredient 1", "explanation": "3 sentences on molecular action for this user."}},
-                    {{"name": "Ingredient 2", "explanation": "3 sentences on molecular action."}},
-                    {{"name": "Ingredient 3", "explanation": "3 sentences on molecular action."}}
-                  ],
-                  "detailed_routine": [
-                    "Morning Step 1: Specific cleanser technique (e.g. rub in hands for 10s, massage on wet skin for 60s, rinse with cool water).",
-                    "Morning Step 2: ...",
-                    "Evening Step 1: ...",
-                    "Evening Step 2: ..."
-                  ],
-                  "disclaimers": "Full medical disclaimer: Informational only. Consult a doctor.",
-                  "final_joke": "One final inspiring but cynical 'Bro' joke.",
-                  "monetization": "Explain they can hunt for products for free or buy our curated brands list for $5 to fund my Jaguar dream."
-                }}
-                Recommend these based on logic: {logic['ingredients']} and {logic['procedures']}.
-                """
+              mega_prompt = f"""
+You are a dual-role expert: A World-Class Clinical Dermatologist and a sharp, cynical 'Bro-Coach' (vibe: Dr. House meets Ray Donovan).
+Generate a premium, high-value 4-page JSON report for {u_name}.
+
+STRICT RULES FOR CONTENT:
+1. ROAST: Use the 'Sandwich' method. Acknowledge their hustle, then a sharp cinematic metaphor about their {u_sins}. End with support. No cheap insults.
+2. CLINICAL ANALYSIS: Minimum 8 sentences. Deep medical dive into texture, vascular patterns, and epidermal barrier status.
+3. DETAILED ROUTINE (THE CORE VALUE): 
+   - Every active serum MUST be 'sealed' with a moisturizer. 
+   - Explain the 'Occlusion' principle: why a cream is necessary to lock in the serum and prevent Trans-Epidermal Water Loss (TEWL).
+   - Use specific techniques: 'wait 3 minutes for the serum to absorb', 'warm the cream in palms', 'press into the skin'.
+
+STRICT JSON STRUCTURE:
+{{
+  "header": "Skin Upgrade Protocol for {u_name}",
+  "roast": "4-5 sentences.",
+  "clinical_analysis": "8+ full sentences. Professional clinical tone.",
+  "hidden_findings": "2-3 additional issues detected for upsell gap.",
+  "clinical_protocol": [
+    {{"name": "Procedure", "description": "3 detailed sentences: mechanism, necessity, and result."}}
+  ],
+  "home_weapons": [
+    {{"name": "Ingredient", "explanation": "Molecular action + why it must be sealed with a barrier cream."}}
+  ],
+  "detailed_routine": [
+    "Morning Step 1 (Cleansing): ...",
+    "Morning Step 2 (Activation): Apply Serum...",
+    "Morning Step 3 (Sealing): Apply Cream/SPF to lock in ingredients and protect armor...",
+    "Evening Step 1: ...",
+    "Evening Step 2: ...",
+    "Evening Step 3: Sealing step..."
+  ],
+  "disclaimers": "Medical disclaimer.",
+  "final_joke": "One final inspiring but sharp 'Bro' joke.",
+  "monetization": "Search for free or buy our curated brands list for $5 to fund my Jaguar."
+}}
+"""
 
                 response = client.chat.completions.create(
                     model="gpt-4o", response_format={ "type": "json_object" },
