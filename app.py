@@ -135,31 +135,38 @@ else:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-                # 2. Промпт без f-строки для избежания конфликта скобок
+                # 2. Промпт с усиленным анализом фото и скрытыми находками
                 raw_prompt = """
                 You are a cynical, world-class clinical dermatologist with a dark sense of humor. 
                 Generate a premium 4-page report in JSON for {name}, age {age}.
                 Current routine: {routine}. Lifestyle sins: {sins}. Focus on {enemy}.
                 
                 STRICT CONTENT RULES:
-                1. THE REALITY CHECK: 6-8 sentences of brutal, cynical 'Bro Roast'. Dark medical humor about {sins}.
-                2. CLINICAL ANALYSIS: Minimum 12 full sentences. Deep dive into epidermal barrier and collagen density.
-                3. CLINICAL PROTOCOL: EXACTLY 3 procedures from: {proc_list}. 4 sentences for each.
-                4. HOME WEAPONS: EXACTLY 3 actives from: {ing_list}. 3 sentences + RED warning for each.
-                5. DETAILED ROUTINE: Separation of Morning/Evening. EVERY step must have 3 sentences of technique.
-                6. MONETIZATION: Pitch about the $5 brands list to fund a Jaguar E-Type V12.
+                1. THE REALITY CHECK: 6-8 sentences of brutal, cynical 'Bro Roast' about {sins}. No cheap jokes, be cinematic.
+                2. CLINICAL ANALYSIS (PHOTO-BASED): This is the CORE. Analyze the uploaded photo in detail. 
+                   - Identify specific visual markers (e.g., boxcar scars, pore depth, vascular patterns).
+                   - Explain how {sins} and {routine} are physically manifesting on this specific face.
+                   - Write exactly 12-15 sentences using heavy medical terminology (epidermal atrophy, glycation, etc.).
+                3. HIDDEN FINDINGS: List 2-3 additional issues detected on the photo that the user DID NOT mention (e.g., incipient wrinkles, dehydration lines).
+                4. CLINICAL PROTOCOL: EXACTLY 3 procedures from: {proc_list}. 4 sentences for each on cellular mechanism.
+                5. HOME WEAPONS: EXACTLY 3 actives from: {ing_list}. 3 sentences + RED warning for each.
+                6. DETAILED ROUTINE: Separation of Morning/Evening. EVERY step must have 3 sentences of technique (massage, wait times).
+                7. MONETIZATION: Pitch about the $5 brands list to fund a Jaguar E-Type V12.
 
                 STRICT JSON STRUCTURE:
                 {{
-                  "header": "ULTIMATE SKIN UPGRADE PROTOCOL: {name}",
-                  "roast": "...", "clinical_analysis": "...",
+                  "header": "ULTIMATE PHOTO-BASED PROTOCOL: {name}",
+                  "roast": "...", 
+                  "clinical_analysis": "...",
+                  "hidden_findings": "List additional findings from the photo analysis here",
                   "clinical_protocol": [ {{ "name": "...", "description": "..." }} ],
                   "home_weapons": [ {{ "name": "...", "explanation": "...", "safety_warning": "..." }} ],
                   "morning_routine": ["..."], "evening_routine": ["..."],
-                  "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", "monetization": "..."
+                  "safety_disclaimer": "...", 
+                  "medical_notice": "AI ACCURACY NOTICE: This analysis is performed by AI based on a 2D image and may not be 100% accurate. This report is for educational purposes and is not a substitute for professional medical advice. Consult a doctor.",
+                  "final_joke": "...", "monetization": "..."
                 }}
                 """
-                
                 mega_prompt = raw_prompt.format(
                     name=u_name, 
                     age=u_age, 
