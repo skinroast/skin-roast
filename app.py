@@ -63,17 +63,16 @@ def create_premium_pdf(data):
         pdf.multi_cell(0, 5, txt=f"WARNING: {clean_text(weapon['safety_warning'])}")
         pdf.set_text_color(0, 0, 0); pdf.ln(2)
 
-    # PAGE 3: ROUTINE WITH DASHED BORDER
+    # PAGE 3: ROUTINE WITH BORDER
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. THE SEALING PROTOCOL (DAILY OPERATIONS)", ln=True, align='C')
     pdf.set_font("Helvetica", 'I', 9); pdf.cell(0, 10, "Cut along the line and tape this to your bathroom mirror.", ln=True, align='C')
     
-    # Рисуем пунктирную рамку
-    pdf.set_dash(3, 3) 
-    pdf.rect(10, 35, 190, 150) # Координаты рамки
-    pdf.set_dash() # Сброс пунктира для текста
+    # Рисуем сплошную рамку (вместо пунктирной)
+    pdf.set_line_width(0.5)
+    pdf.rect(10, 40, 190, 160) 
 
-    pdf.set_xy(15, 40)
+    pdf.set_xy(15, 45)
     pdf.set_font("Helvetica", 'B', 12); pdf.cell(0, 10, "MORNING / AM OPERATION:", ln=True)
     for step in data['morning_routine']:
         pdf.set_x(15)
@@ -105,7 +104,7 @@ query_params = st.query_params
 access_granted = query_params.get("paid") == "true"
 
 if not access_granted:
-    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px;">⚠️ <b>HONEST WARNING:</b> Saving for a Jaguar E-Type. $10 analysis helps the dream.</div>', unsafe_allow_html=True)
+    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px;">⚠️ <b>HONEST WARNING:</b> I am saving for a Jaguar E-Type. $10 analysis helps the dream.</div>', unsafe_allow_html=True)
     try: st.image("scan_face.png", use_column_width=True)
     except: st.info("🖼 scan_face.png missing.")
     st.markdown('<h1 style="text-align: center; background: -webkit-linear-gradient(45deg, #FF4B2B, #FF416C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem;">YOUR MIRROR LIES.<br>AI DOESN\'T.</h1>', unsafe_allow_html=True)
@@ -116,7 +115,6 @@ else:
         u_name = st.text_input("First Name")
         u_age = st.selectbox("Age Group", ["18-24", "25-34", "35-44", "45-54", "55+"])
         u_enemy = st.selectbox("Main Complaint", list(TREATMENT_LOGIC.keys()))
-        # ВОЗВРАЩЕННЫЙ ПУНКТ АНКЕТЫ
         u_routine = st.selectbox("Current Operations", ["Water only", "Bar Soap", "Basic Moisturizer", "Full Protocol"])
         u_sins = st.multiselect("Lifestyle Sins", ["Smoking", "Alcohol", "Sugar", "No SPF", "No Sleep"])
         u_file = st.file_uploader("Upload Selfie", type=['jpg', 'png', 'jpeg'])
@@ -129,24 +127,19 @@ else:
                 logic = TREATMENT_LOGIC[u_enemy]
                 mega_prompt = f"""
                 You are a world-class clinical dermatologist and a witty 'Bro-Coach'. Generate a premium 4-page report in JSON for {u_name}, age {u_age}.
-                Current user routine: {u_routine}. Focus on {u_enemy}.
-                
-                STRICT CONTENT RULES:
-                - ROAST: Unique 'Sandwich' method. No repetitive jokes.
-                - CLINICAL ANALYSIS: Min 8 full sentences. Deep photo dive.
-                - CLINICAL PROTOCOL: EXACTLY 3 procedures from: {logic['procedures']}.
-                - HOME WEAPONS: EXACTLY 3 actives from: {logic['ingredients']}. Include molecular explanation and RED warning.
-                - ROUTINE: Detailed Morning/Evening steps with technique.
-                - MONETIZATION: Include the Jaguar E-Type dream and the $5 curated list offer.
+                Current routine: {u_routine}. Focus on {u_enemy}.
                 
                 STRICT JSON STRUCTURE:
                 {{
                   "header": "Skin Upgrade Protocol for {u_name}",
-                  "roast": "...", "clinical_analysis": "...",
-                  "clinical_protocol": [ {{"name": "...", "description": "3 sentences"}} ],
-                  "home_weapons": [ {{"name": "...", "explanation": "3 sentences", "safety_warning": "..."}} ],
-                  "morning_routine": ["Step 1", "Step 2"], "evening_routine": ["Step 1", "Step 2"],
-                  "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", "monetization": "..."
+                  "roast": "Nice start -> unique sharp scenario roast about {u_sins} -> support.",
+                  "clinical_analysis": "Minimum 8 full sentences. Deep photo analysis.",
+                  "clinical_protocol": [ {{"name": "Procedure", "description": "3 sentences"}} ],
+                  "home_weapons": [ {{"name": "Active", "explanation": "3 sentences", "safety_warning": "..."}} ],
+                  "morning_routine": ["Detailed Step with technique"],
+                  "evening_routine": ["Detailed Step with technique"],
+                  "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", 
+                  "monetization": "Explain buying brands list for $5 to fund my Jaguar E-Type."
                 }}
                 """
                 response = client.chat.completions.create(
