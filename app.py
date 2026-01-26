@@ -31,9 +31,8 @@ TREATMENT_LOGIC = {
 # --- 3. UTILS & PDF GENERATOR ---
 
 def clean_text(text):
-    """Ультимативная очистка для FPDF: только ASCII символы"""
+    """Очистка для FPDF: только безопасные ASCII символы"""
     if isinstance(text, str):
-        # Замена типичных юникод-символов на ASCII аналоги
         replacements = {
             '\u2018': "'", '\u2019': "'", '\u201c': '"', '\u201d': '"',
             '\u2013': '-', '\u2014': '-', '\u2026': '...', '’': "'", '‘': "'",
@@ -41,7 +40,6 @@ def clean_text(text):
         }
         for char, rep in replacements.items():
             text = text.replace(char, rep)
-        # Удаляем всё остальное, что не входит в ASCII (включая кириллицу и эмодзи)
         return text.encode('ascii', 'ignore').decode('ascii')
     return str(text)
 
@@ -68,13 +66,13 @@ def create_premium_pdf(data):
     pdf.add_page()
     pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "4. CLINICAL PROTOCOL", ln=True)
     for proc in data.get('clinical_protocol', []):
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[*] {clean_text(proc['name'])}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc['description'])); pdf.ln(2)
+        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[*] {clean_text(proc.get('name', ''))}", ln=True)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(proc.get('description', ''))); pdf.ln(2)
 
     pdf.ln(5); pdf.set_font("Helvetica", 'B', 16); pdf.cell(0, 15, "5. YOUR HOME WEAPONS", ln=True)
     for weapon in data.get('home_weapons', []):
-        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon['name'])}", ln=True)
-        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon['explanation'])); pdf.ln(2)
+        pdf.set_font("Helvetica", 'B', 11); pdf.cell(0, 8, f"[+] {clean_text(weapon.get('name', ''))}", ln=True)
+        pdf.set_font("Helvetica", size=10); pdf.multi_cell(0, 6, txt=clean_text(weapon.get('explanation', ''))); pdf.ln(2)
 
     # PAGE 3: ROUTINE
     pdf.add_page()
@@ -100,14 +98,13 @@ access_granted = query_params.get("paid") == "true"
 
 if not access_granted:
     # LANDING PAGE
-    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace; font-size: 0.9rem; margin-bottom: 25px;">⚠️ <b>HONEST WARNING:</b> Saving for a Jaguar E-Type. Every $10 analysis gets me 0.000001% closer to the dream.</div>', unsafe_allow_html=True)
+    st.markdown('<div style="background-color: #2b2d18; color: #e6c957; padding: 20px; border-radius: 10px; border: 1px solid #e6c957; font-family: monospace;">⚠️ HONEST WARNING: Saving for a Jaguar E-Type. Each analysis helps.</div>', unsafe_allow_html=True)
     try:
         st.image("scan_face.png", use_column_width=True)
     except:
         st.info("🖼 scan_face.png missing.")
     
     st.markdown('<h1 style="text-align: center; background: -webkit-linear-gradient(45deg, #FF4B2B, #FF416C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem;">YOUR MIRROR LIES.<br>AI DOESN\'T.</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; color: #aaa; font-size: 1.2rem;">Get a brutally honest analysis and a tailored routine to fix your face.</p>', unsafe_allow_html=True)
     st.link_button("👉 UNLOCK MY ROAST ($10)", PATREON_LINK, type="primary", use_container_width=True)
 
 else:
@@ -128,19 +125,27 @@ else:
                 logic = TREATMENT_LOGIC[u_enemy]
                 
                 mega_prompt = f"""
-                You are a top-tier clinical dermatologist and roast comedian. 
-                Create a 4-page premium report in JSON for {u_name}, age {u_age}.
-                1. header: "Skin Condition Analysis for {u_name}"
-                2. roast: 4-5 cynical sentences about lifestyle choices ({u_sins}).
-                3. clinical_analysis: Minimum 6 sentences. Deep medical analysis of photo: texture, barrier, type. No jokes.
-                4. hidden_findings: 2-3 other issues detected on photo besides {u_enemy}.
-                5. clinical_protocol: 2 procedures from {logic['procedures']} with detailed descriptions.
-                6. home_weapons: 3 actives from {logic['ingredients']} with molecular explanations.
-                7. detailed_routine: Step list with technique (e.g. massage 1 min, apply on damp skin).
-                8. disclaimers: Full medical disclaimer.
-                9. final_joke: Inspiring but sharp closing joke.
-                10. monetization: Explain they can search for free or buy our curated list for $5 to fund my Jaguar dream.
-                STRICT JSON FORMAT. No other text.
+                You are a world-class clinical dermatologist and roast comedian. 
+                Generate a 4-page premium report in JSON for {u_name}, age {u_age}.
+                
+                STRICT JSON STRUCTURE:
+                {{
+                  "header": "Skin Analysis for {u_name}",
+                  "roast": "4-5 cynical sentences about lifestyle choices ({u_sins}).",
+                  "clinical_analysis": "Minimum 6 sentences. Deep medical photo analysis: texture, barrier, type. Serious tone.",
+                  "hidden_findings": "2-3 other issues detected on photo.",
+                  "clinical_protocol": [
+                    {{"name": "Procedure", "description": "2-3 sentences on action and results."}}
+                  ],
+                  "home_weapons": [
+                    {{"name": "Ingredient", "explanation": "2-3 sentences on molecular action."}}
+                  ],
+                  "detailed_routine": ["Morning Step 1 with technique", "Evening Step 1 with technique"],
+                  "disclaimers": "Medical disclaimer.",
+                  "final_joke": "Inspiring cynical joke.",
+                  "monetization": "Buy our list for $5 to fund my Jaguar."
+                }}
+                Use logic: {logic['ingredients']} and {logic['procedures']}.
                 """
 
                 response = client.chat.completions.create(
@@ -152,14 +157,10 @@ else:
                     ]
                 )
                 
-                # Парсинг ответа
                 report_data = json.loads(response.choices[0].message.content)
-                
-                st.success("Analysis Complete.")
                 pdf_path = create_premium_pdf(report_data)
                 
                 with open(pdf_path, "rb") as f:
                     st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{u_name}.pdf")
-                    
             except Exception as e:
                 st.error(f"Error: {e}")
