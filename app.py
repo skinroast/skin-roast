@@ -130,10 +130,66 @@ else:
 
     if submit and u_file and u_name:
         with st.spinner("Executing clinical scan..."):
-            try:
+           try:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-                mega_prompt = f"""
+                # Используем обычную строку и удвоенные скобки для JSON {{ }}
+                # Это защищает от SyntaxError и ошибок форматирования
+                raw_prompt = """
                 You are a cynical, world-class clinical dermatologist with a dark sense of humor. 
-                Generate a premium 4-page report in
+                Generate a premium 4-page report in JSON for {name}, age {age}.
+                Current routine: {routine}. Lifestyle sins: {sins}. Focus on {enemy}.
+                
+                STRICT CONTENT RULES:
+                1. THE REALITY CHECK: 6-8 sentences of brutal, cynical 'Bro Roast'. Dark medical humor about {sins}.
+                2. CLINICAL ANALYSIS: Minimum 12 full sentences. Deep dive into epidermal barrier, collagen density, and vascular patterns.
+                3. CLINICAL PROTOCOL: EXACTLY 3 procedures from: {proc_list}. 4 sentences for each.
+                4. HOME WEAPONS: EXACTLY 3 actives from: {ing_list}. 3 sentences + RED warning for each.
+                5. DETAILED ROUTINE: Separation of Morning/Evening. EVERY step must have 3 sentences of technique (massage, wait times).
+                6. MONETIZATION: Pitch about the $5 brands list to fund a Jaguar E-Type V12.
+
+                STRICT JSON STRUCTURE:
+                {{
+                  "header": "ULTIMATE SKIN UPGRADE PROTOCOL: {name}",
+                  "roast": "...", "clinical_analysis": "...",
+                  "clinical_protocol": [ {{ "name": "...", "description": "..." }} ],
+                  "home_weapons": [ {{ "name": "...", "explanation": "...", "safety_warning": "..." }} ],
+                  "morning_routine": ["..."], "evening_routine": ["..."],
+                  "safety_disclaimer": "...", "medical_notice": "...", "final_joke": "...", "monetization": "..."
+                }}
+                """
+                
+                # Подставляем переменные через .format()
+                mega_prompt = raw_prompt.format(
+                    name=u_name, 
+                    age=u_age, 
+                    routine=u_routine, 
+                    sins=u_sins, 
+                    enemy=u_enemy, 
+                    proc_list=logic['procedures'], 
+                    ing_list=logic['ingredients']
+                )
+
+                response = client.chat.completions.create(
+                    model="gpt-4o", 
+                    response_format={ "type": "json_object" },
+                    messages=[
+                        {"role": "system", "content": mega_prompt},
+                        {"role": "user", "content": [
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
+                        ]}
+                    ]
+                )
+                
+                # Проверка на пустой ответ (NoneType error fix)
+                raw_content = response.choices[0].message.content
+                if not raw_content:
+                    st.error("AI returned an empty response. Try again.")
+                else:
+                    report_data = json.loads(raw_content)
+                    pdf_path = create_premium_pdf(report_data)
+                    with open(pdf_path, "rb") as f:
+                        st.download_button("⬇️ DOWNLOAD 4-PAGE CUSTOM PLAN", f, file_name=f"SkinRoast_{u_name}.pdf")
+            except Exception as e:
+                st.error(f"Critical Error: {e}")
