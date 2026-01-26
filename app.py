@@ -115,17 +115,34 @@ else:
                 base64_img = base64.b64encode(u_file.read()).decode('utf-8')
                 logic = TREATMENT_LOGIC[u_enemy]
                 
-                mega_prompt = (
-                    f"You are a world-class clinical dermatologist and a cynical 'Bro-Coach'. "
-                    f"Create a 4-page premium report in JSON for {u_name}, age {u_age}. "
-                    f"Routine: {u_routine}. Sins: {u_sins}. Focus: {u_enemy}. "
-                    "Return ONLY JSON: {{ \"header\": \"...\", \"roast\": \"4-5 cynical sentences\", \"clinical_analysis\": \"10+ sentences\", "
-                    "\"clinical_protocol\": [ {{ \"name\": \"...\", \"description\": \"3 sentences\" }} ], "
-                    "\"home_weapons\": [ {{ \"name\": \"...\", \"explanation\": \"3 sentences\", \"safety_warning\": \"...\" }} ], "
-                    "\"morning_routine\": [\"Detailed step with technique\"], \"evening_routine\": [\"Detailed step with technique\"], "
-                    "\"safety_disclaimer\": \"...\", \"medical_notice\": \"...\", \"final_joke\": \"...\", \"monetization\": \"...\" }}"
-                )
+               mega_prompt = f"""
+You are a top-tier clinical dermatologist with the sharp, dark wit of a professional roast comedian. 
+Generate an ultra-premium, high-volume 4-page JSON report for {u_name}, age {u_age}.
+User's current routine: {u_routine}. Their lifestyle sins: {u_sins}. Primary concern: {u_enemy}.
 
+STRICT CONTENT RULES:
+1. THE REALITY CHECK (ROAST): Write a massive, 6-8 sentence brutal roast. Don't just mention the sins, paint a cinematic, cynical picture of their skin's future if they continue. Use high-level vocabulary and dark medical humor. It must be a true 'Skin Roast'.
+2. CLINICAL ANALYSIS: Minimum 10-12 full sentences. Deep-dive into dermal density, epidermal thickness, and micro-vascular congestion. Use serious medical terminology to justify the high price of this report.
+3. CLINICAL PROTOCOL: List EXACTLY 3 high-end procedures from {logic['procedures']}. For EACH, write 4 detailed sentences explaining the technology, the cellular response, and the long-term structural benefits.
+4. HOME WEAPONS: List EXACTLY 3 actives from {logic['ingredients']}. For EACH, provide a molecular-level explanation and a bolded safety warning regarding SPF and sensitivity.
+5. THE SEALING PROTOCOL (ROUTINE): For every AM and PM step, provide 3-4 sentences. Include the technique, the amount of product, and the exact sensation the user should feel (e.g., 'a slight tingle indicating active penetration'). Ensure the text fills the page.
+6. MONETIZATION: Close with a sharp, funny pitch about how their $5 purchase of the 'Shopping List' is the only thing standing between you and a vintage Jaguar E-Type.
+
+STRICT JSON STRUCTURE:
+{{
+  "header": "ULTIMATE SKIN UPGRADE PROTOCOL: {u_name}",
+  "roast": "Long brutal roast here",
+  "clinical_analysis": "Very long medical deep-dive here",
+  "clinical_protocol": [ {{ "name": "...", "description": "4 sentences" }} ],
+  "home_weapons": [ {{ "name": "...", "explanation": "3 sentences", "safety_warning": "..." }} ],
+  "morning_routine": ["Step 1 with heavy detail", "Step 2 with heavy detail", "Step 3 Sealing"],
+  "evening_routine": ["Step 1 with heavy detail", "Step 2 with heavy detail", "Step 3 Sealing"],
+  "safety_disclaimer": "Safety rules...",
+  "medical_notice": "Legal notice...",
+  "final_joke": "One final dark joke about looking better than your lifestyle suggests.",
+  "monetization": "Jaguar pitch..."
+}}
+"""
                 response = client.chat.completions.create(
                     model="gpt-4o", response_format={ "type": "json_object" },
                     messages=[{"role": "system", "content": mega_prompt},
